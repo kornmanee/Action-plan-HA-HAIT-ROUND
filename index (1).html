@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>แผนการดำเนินงาน HA, HAIT และ Hospital Round โรงพยาบาลตาพระยา</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --ink:#14304A; --ink-2:#4A5F73; --paper:#F2F5F7; --card:#FFFFFF; --line:#D3DBE3;
+  --round:#1F7A5A; --round-soft:#DCEFE6;
+  --survey:#2B59C3; --survey-soft:#DCE6FA;
+  --hait:#A8690C; --hait-soft:#F7E9CC;
+  --review:#6B4FA3; --review-soft:#E6DEF4;
+  --alert:#B3261E; --alert-soft:#F8DAD7;
+  --backup:#FFE066; --backup-ink:#4D3B00;
+  --txt:#111111; --txt-h:#0A3FD0; --txt-h2:#3F5FC4;
+  --aft:#CFEFF5; --aft-strong:#2AA7C0;
+  --weekend:#8A99A8; --focus:#0B63CE;
+  --font:'IBM Plex Sans Thai','Sarabun','Noto Sans Thai',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#E4ECF3; --ink-2:#A9B8C6; --paper:#0F1A24; --card:#18273A; --line:#2C3E52;
+    --round:#4CC38F; --round-soft:#17392E;
+    --survey:#7FA5F5; --survey-soft:#1B2D54;
+    --hait:#E3A94A; --hait-soft:#3D2E14;
+    --review:#B79BEA; --review-soft:#2D2347;
+    --alert:#F2877F; --alert-soft:#451B18;
+    --backup:#C9A227; --backup-ink:#201800;
+    --txt:#F2F5F8; --txt-h:#8AB4FF; --txt-h2:#7A9FE8;
+    --aft:#174650; --aft-strong:#4FC3DB;
+    --weekend:#74869A; --focus:#7DB4FF;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#E4ECF3; --ink-2:#A9B8C6; --paper:#0F1A24; --card:#18273A; --line:#2C3E52;
+  --round:#4CC38F; --round-soft:#17392E;
+  --survey:#7FA5F5; --survey-soft:#1B2D54;
+  --hait:#E3A94A; --hait-soft:#3D2E14;
+  --review:#B79BEA; --review-soft:#2D2347;
+  --alert:#F2877F; --alert-soft:#451B18;
+  --backup:#C9A227; --backup-ink:#201800;
+  --txt:#F2F5F8; --txt-h:#8AB4FF; --txt-h2:#7A9FE8;
+  --aft:#174650; --aft-strong:#4FC3DB;
+  --weekend:#74869A; --focus:#7DB4FF;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--txt);font-family:var(--font);font-size:16px;line-height:1.55;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.app{max-width:760px;margin:0 auto;padding:0 14px 96px}
+.top{padding:16px 2px 6px}
+.top h1{font-size:19px;font-weight:600;margin:0;letter-spacing:.1px}
+.top p{margin:2px 0 0;color:var(--ink-2);font-size:14px}
+.mode{font-size:13px!important}
+.mode b{font-weight:500;color:var(--round)}
+.mode.ro b{color:var(--alert)}
+
+/* next-round hero */
+.next{background:var(--ink);color:var(--paper);border-radius:14px;padding:16px 18px;margin:10px 0 14px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:end}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .next{background:#1E3550;color:#E4ECF3}}
+:root[data-theme="dark"] .next{background:#1E3550;color:#E4ECF3}
+.next .when{font-size:30px;font-weight:600;line-height:1.15}
+.next .what{grid-column:1/2;font-size:15px;opacity:.92}
+.next .count{grid-row:1/3;grid-column:2/3;align-self:center;text-align:center;border:1.5px solid currentColor;border-radius:999px;padding:6px 14px;font-weight:600;font-size:15px;white-space:nowrap}
+.next button{grid-column:1/3;margin-top:10px;justify-self:start;background:transparent;border:1.5px solid currentColor;color:inherit;border-radius:8px;padding:7px 14px;font-weight:500}
+
+/* year ribbon */
+.ribbon{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 10px;scrollbar-width:thin}
+.chip{flex:0 0 auto;min-width:54px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 8px 0;text-align:center;font-size:14px;font-weight:500;position:relative}
+.chip small{display:block;color:var(--ink-2);font-size:11px;font-weight:400}
+.chip i{display:block;height:5px;border-radius:0 0 8px 8px;margin:6px -8px 0}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chip[aria-pressed="true"] small{color:inherit;opacity:.8}
+.chip.now::after{content:"";position:absolute;top:5px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--alert)}
+.k-aft{background:var(--aft-strong)} .k-round{background:var(--round)} .k-survey{background:var(--survey)} .k-hait{background:var(--hait)} .k-review{background:var(--review)}
+
+/* calendar */
+.calhead{display:flex;align-items:center;justify-content:space-between;margin:2px 0 8px}
+.calhead h2{margin:0;font-size:18px;font-weight:600}
+.calhead .phase{font-size:13px;color:var(--ink-2)}
+.iconbtn{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:18px;line-height:1}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.dow{text-align:center;font-size:12px;color:var(--ink-2);padding:2px 0}
+.day{min-height:56px;border-radius:9px;border:1px solid transparent;background:var(--card);padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1px;font-size:15px;position:relative}
+.day.empty{background:transparent;border:0;pointer-events:none}
+.day .lb{font-size:10.5px;line-height:1.15;font-weight:500}
+.day.wk{color:var(--weekend)}
+.day.hol{background:var(--alert-soft);color:var(--alert)}
+.day.hait{background:var(--hait-soft)}
+.day.round{background:var(--round);color:#fff;font-weight:600}
+.day.backup{background:var(--backup);color:var(--backup-ink);font-weight:600}
+.day.aft{background:var(--aft);color:var(--txt);font-weight:600}
+.day .am{position:absolute;bottom:3px;left:50%;margin-left:-8px;width:16px;height:5px;border-radius:3px;background:var(--aft-strong);box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.day.survey{background:var(--survey);color:#fff;font-weight:600}
+.day.review{background:var(--review);color:#fff;font-weight:600}
+.day.today{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.day .dot{position:absolute;top:4px;right:5px;width:7px;height:7px;border-radius:50%;background:#FFD166}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 2px 4px;font-size:13px;color:var(--ink-2)}
+.legend span::before{content:"";display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+
+.agenda{margin:14px 0 0;display:grid;gap:8px}
+.ev{display:grid;grid-template-columns:62px 1fr;gap:12px;text-align:left;width:100%;background:var(--card);border:1px solid var(--line);border-left-width:5px;border-radius:12px;padding:11px 12px}
+.ev .d{font-weight:600;font-size:15px;line-height:1.25}
+.ev .d small{display:block;font-weight:400;color:var(--ink-2);font-size:12px}
+.ev .t{font-weight:500;line-height:1.35}
+.ev .s{color:var(--ink-2);font-size:13.5px;margin-top:2px}
+.ev.aft{border-left-color:var(--aft-strong)} .ev.round{border-left-color:var(--round)} .ev.survey{border-left-color:var(--survey)} .ev.hait{border-left-color:var(--hait)} .ev.review{border-left-color:var(--review)}
+
+/* tabs */
+.tabbar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));z-index:5}
+.tabbar .in{display:flex;width:100%;max-width:760px;gap:4px}
+.tab{flex:1;border:0;background:transparent;border-radius:10px;padding:8px 4px;font-size:14px;font-weight:500;color:var(--ink-2);position:relative}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+.tab .n{position:absolute;top:2px;right:10px;background:var(--alert);color:#fff;border-radius:999px;font-size:11px;min-width:18px;padding:0 5px;line-height:18px}
+[hidden]{display:none!important}
+
+/* cards, forms */
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:0 0 12px}
+.card h3{margin:0 0 6px;font-size:16px;font-weight:600}
+.muted{color:var(--ink-2)} .small{font-size:13.5px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid var(--ink);background:var(--ink);color:var(--paper);border-radius:9px;padding:9px 14px;font-weight:500}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.warn{background:var(--alert);border-color:var(--alert);color:#fff}
+.btn.sm{padding:5px 10px;font-size:14px}
+label{display:block;font-size:14px;font-weight:500;margin:10px 0 4px}
+input[type=text],input[type=date],select,textarea{width:100%;border:1px solid var(--line);background:var(--card);border-radius:9px;padding:9px 10px}
+textarea{min-height:92px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pill{display:inline-block;border-radius:999px;padding:1px 9px;font-size:12.5px;font-weight:500;background:var(--round-soft);color:var(--round)}
+.pill.hi{background:var(--alert-soft);color:var(--alert)} .pill.mid{background:var(--hait-soft);color:var(--hait)} .pill.done{background:var(--line);color:var(--ink-2)} .pill.af{background:var(--aft);color:var(--txt)} .pill.bk{background:var(--backup);color:var(--backup-ink)} .pill.survey{background:var(--survey-soft);color:var(--survey)} .pill.review{background:var(--review-soft);color:var(--review)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+.fchip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 12px;font-size:14px}
+.fchip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.issue{border-left:5px solid var(--line);display:grid;gap:4px}
+.issue.hi{border-left-color:var(--alert)} .issue.mid{border-left-color:var(--hait)} .issue.low{border-left-color:var(--round)}
+.issue .tx{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.issue.closed{opacity:.62}
+.empty-note{text-align:center;color:var(--ink-2);padding:26px 10px}
+.fab{position:fixed;right:max(16px,calc(50% - 364px));bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:4;border-radius:999px;padding:12px 18px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.stat{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.stat div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}
+.stat b{display:block;font-size:24px;line-height:1.1}
+.stat span{font-size:12.5px;color:var(--ink-2)}
+.stat .a b{color:var(--alert)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:7px 4px;border-bottom:1px solid var(--line);text-align:center}
+th:first-child,td:first-child{text-align:left}
+tr[data-r]{cursor:pointer}
+.bar{height:8px;border-radius:5px;background:var(--line);overflow:hidden;margin:6px 0 2px}
+.bar i{display:block;height:100%;background:var(--round)}
+.tl{display:grid;gap:8px}
+.tl .item{display:grid;grid-template-columns:10px 1fr auto;gap:10px;align-items:start}
+.tl .item b{display:block;font-weight:600}
+.tl .sw{width:10px;height:100%;min-height:36px;border-radius:5px}
+
+/* sheet */
+.backdrop{position:fixed;inset:0;background:rgba(10,20,30,.5);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--paper);width:100%;max-width:760px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:14px 16px calc(24px + env(safe-area-inset-bottom,0px));animation:up .18s ease-out}
+@keyframes up{from{transform:translateY(24px);opacity:.4}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion: reduce){.sheet{animation:none}}
+.sheet .hd{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;position:sticky;top:-14px;background:var(--paper);padding:2px 0 8px;z-index:1}
+.sheet h2{margin:0;font-size:20px;font-weight:600;line-height:1.25}
+.step{display:grid;grid-template-columns:96px 1fr;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.step .tm{font-weight:600;font-size:14.5px;color:var(--round)}
+.step.hait .tm{color:var(--hait)}
+.step .nm{font-weight:500}
+.step .pt{font-size:13.5px;color:var(--ink-2);margin-top:2px}
+.step .pp{font-size:13px;color:var(--ink-2)}
+.warnbox{background:var(--alert-soft);color:var(--alert);border-radius:9px;padding:7px 10px;font-size:14px;margin:8px 0}
+.okbox{background:var(--round-soft);color:var(--round);border-radius:9px;padding:7px 10px;font-size:14px;margin:8px 0}
+details{margin:8px 0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+summary{cursor:pointer;font-weight:500}
+details ul{margin:6px 0 2px;padding-left:18px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:10px;z-index:40;font-size:14.5px;max-width:90vw}
+.itm{display:grid;grid-template-columns:44px 1fr auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.itm .id{font-weight:600;color:var(--ink-2)}
+.st{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:4px 10px;font-size:13px;min-width:78px}
+.st[data-s="1"]{background:var(--hait-soft);color:var(--hait);border-color:transparent}
+.st[data-s="2"]{background:var(--round-soft);color:var(--round);border-color:transparent}
+.st[data-s="3"]{background:var(--line);color:var(--ink-2)}
+.foot{color:var(--ink-2);font-size:13px;margin:18px 2px}
+/* HA = black text, HAIT = blue text */
+.ht,.ht .nm,.ht .tm,.ht h2,.ht h3,.ht b,.ht .t,.ht .d{color:var(--txt-h)}
+.ht .muted,.ht .small,.ht .pt,.ht .pp,.ht .s{color:var(--txt-h2)}
+.step.hait .tm,.step.hait .nm{color:var(--txt-h)}
+.step.hait .pt,.step.hait .pp{color:var(--txt-h2)}
+.ev.hait .t,.ev.hait .d{color:var(--txt-h)} .ev.hait .s{color:var(--txt-h2)}
+.day.hait{color:var(--txt-h);font-weight:600}
+#v-hait{color:var(--txt-h)} #v-hait .muted,#v-hait .small.muted{color:var(--txt-h2)} #v-hait .id{color:var(--txt-h2)}
+.issue.work-hait,.issue.work-hait b{color:var(--txt-h)} .issue.work-hait .muted{color:var(--txt-h2)}
+.pill.tg{background:transparent;border:1px solid var(--txt);color:var(--txt);padding:0 8px}
+.pill.tg.h{border-color:var(--txt-h);color:var(--txt-h)}
+.legend .tk::before{display:none} .legend .tk{font-weight:500;color:var(--txt)} .legend .tk.h{color:var(--txt-h)}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="top">
+    <h1>แผนการดำเนินงาน HA, HAIT และ Hospital Round</h1>
+    <p>โรงพยาบาลตาพระยา ต.ค. 2569 ถึง ก.ย. 2570</p>
+    <p id="mode" class="mode"></p>
+  </header>
+  <section id="next" class="next" aria-live="polite"></section>
+  <nav id="ribbon" class="ribbon" aria-label="เลือกเดือน"></nav>
+
+  <main>
+    <section id="v-cal"></section>
+    <section id="v-iss" hidden></section>
+    <section id="v-over" hidden></section>
+    <section id="v-hait" hidden></section>
+  </main>
+  <p class="foot" id="foot"></p>
+</div>
+
+<button id="fab" class="btn fab" hidden>+ บันทึกประเด็น</button>
+<div class="tabbar" role="tablist" aria-label="เมนูหลัก"><div class="in" id="tabs"></div></div>
+<div id="layer"></div>
+<div id="toast" class="toast" hidden role="status"></div>
+
+<script>
+const DATA = {"sessions": [{"label": "1", "date": "2026-10-14", "backup": "2026-10-28", "month": "ต.ค. 2569", "theme": "นโยบายผู้บริหาร + บุคลากรและระบบสนับสนุนการปฏิบัติการ (รถ/ก๊าซ/พัสดุ)", "std": ["I-1 การนำ (Leadership) — ทิศทาง/วิสัยทัศน์ผู้นำ, การกำกับดูแลกิจการ, จริยธรรมองค์กร", "I-2 กลยุทธ์ (Strategy) — การวางแผนกลยุทธ์, การถ่ายทอดสู่ปฏิบัติ, การติดตามผล", "I-5 บุคลากร (Workforce) (บทใหม่) — สวัสดิการ, ความปลอดภัย, ขวัญกำลังใจบุคลากร", "I-6 การปฏิบัติการ (Operation) — การบริหารทรัพยากร, สาธารณูปโภค, ความต่อเนื่องทางธุรกิจ"], "comm": "คณะกรรมการบริหารโรงพยาบาล, คณะกรรมการพัฒนาคุณภาพ/ทีมนำ HA, คณะกรรมการพัฒนาบุคลากร (HRD), ทีมอาชีวอนามัยและความปลอดภัย, คณะกรรมการสิ่งแวดล้อมและความปลอดภัย (ENV)", "units": [{"n": "ระดับบริหาร / ทุกกลุ่มงาน (ห้องประชุมผู้บริหาร, บอร์ดตัวชี้วัดกลยุทธ์)", "pts": "การสื่อสารทิศทางองค์กรลงสู่หน้างาน, Core Values (ภาคผนวก 2), การมีส่วนร่วมของบุคลากรในการกำหนดกลยุทธ์", "ppl": "ผอ./คณะกรรมการบริการโรงพยาบาล, หัวหน้ากลุ่มงานทุกกลุ่ม, งานยุทธศาสตร์/แผนงาน, ทีม HA"}, {"n": "โรงรถ", "pts": "ความปลอดภัยยานพาหนะ/การส่งต่อผู้ป่วย, การบำรุงรักษารถพยาบาล", "ppl": "งานยานพาหนะ, วิศวกรรมโรงพยาบาล/ซ่อมบำรุง"}, {"n": "ก๊าซทางการแพทย์", "pts": "ระบบก๊าซทางการแพทย์ (สำรอง/แจ้งเตือนเมื่อผิดปกติ), แผนสำรองเมื่อระบบขัดข้อง", "ppl": "วิศวกรรมโรงพยาบาล/ซ่อมบำรุง, หัวหน้าหอผู้ป่วยที่ใช้ก๊าซ"}, {"n": "ฝ่าย HR / คลังพัสดุ", "pts": "สวัสดิการและความปลอดภัยบุคลากร, ความพร้อมของทรัพยากร/พัสดุ", "ppl": "HR, งานอาชีวอนามัยบุคลากร, งานพัสดุ"}], "hait": {"n": "[HAIT] ฝ่าย IT — เอกสารแผนแม่บท IT / คำสั่งคณะทำงานไซเบอร์", "pts": "แผนแม่บท IT 3-5 ปี สอดคล้องยุทธศาสตร์ รพ. และมีผู้บริหาร-ผู้ใช้ร่วมจัดทำ; แผนปฏิบัติการ IT ปีปัจจุบัน; คณะทำงานไซเบอร์ + Gantt chart; BIA ระบบสำคัญ (HIS/PACS/LIS)", "ppl": "ผอ./CIO, หัวหน้า IT, หัวหน้าฝ่ายพัฒนาคุณภาพ, ประธานองค์กรแพทย์, หัวหน้าฝ่ายการพยาบาล"}, "commH": "คณะทำงานความมั่นคงปลอดภัยไซเบอร์/คณะกรรมการ IT (ประธาน ผอ. หรือ CIO)", "stdH": "HAIT หมวด 1 แผนแม่บท IT (เชื่อมยุทธศาสตร์ รพ.) | HAIT Plus 1.1 คณะทำงานไซเบอร์, 1.2 แผนปฏิบัติการ/BIA"}, {"label": "2", "date": "2026-11-18", "backup": "2026-11-19", "month": "พ.ย. 2569", "theme": "ด่านแรกของผู้ป่วย (คัดกรอง → ARI → OPD → ER)", "std": ["III-1 การเข้าถึงและเข้ารับบริการ (Access and Entry)", "III-2 การประเมินผู้ป่วย (Patient Assessment)", "III-3 การวางแผนการดูแล (Planning)"], "comm": "ทีมนำทางคลินิก (PCT) ที่เกี่ยวข้อง, ทีม ER/Triage, ทีม ARI/IC, ทีมผู้ป่วยนอก", "units": [{"n": "คัดกรองคัดแยก", "pts": "ความรวดเร็ว/แม่นยำในการคัดกรองระดับความรุนแรง (Triage)", "ppl": "พยาบาลคัดกรอง"}, {"n": "ARI", "pts": "การแยกผู้ป่วยทางเดินหายใจ, การป้องกันการแพร่กระจายเชื้อ", "ppl": "ทีม ARI, ทีม IC"}, {"n": "OPD", "pts": "การประเมินผู้ป่วยแรกรับครบถ้วน, ความต่อเนื่องของการรักษา", "ppl": "แพทย์/พยาบาล OPD"}, {"n": "ER", "pts": "การประเมิน/วางแผนดูแลผู้ป่วยฉุกเฉินทันเวลา, การเฝ้าระวังอาการเปลี่ยนแปลง", "ppl": "แพทย์เวร, พยาบาล ER"}], "hait": null}, {"label": "2ข", "date": "2026-11-25", "backup": "2026-12-02", "month": "พ.ย. 2569", "theme": "เสียงผู้รับบริการ ข้อมูล ความเสี่ยง และกำกับวิชาชีพ", "std": ["I-3 ผู้ป่วย/ผู้รับผลงาน (Patient/Customer) — การรับฟังเสียงผู้รับบริการ, การจัดการข้อร้องเรียน", "I-4 การวัด วิเคราะห์ และการจัดการความรู้ — ระบบสารสนเทศ, ตัวชี้วัด, ความมั่นคงปลอดภัยไซเบอร์/PDPA (บทใหม่)", "II-1 บริหารคุณภาพ ความเสี่ยง ความปลอดภัย (QRM) — ระบบรายงานอุบัติการณ์, RCA", "II-2 การกำกับดูแลด้านวิชาชีพ (Professional Governance) — credentialing/privileging, scope of practice"], "comm": "คณะกรรมการสารสนเทศ/IM, ทีมคุ้มครองข้อมูลส่วนบุคคล (PDPA), ทีมรับเรื่องร้องเรียน/ผู้รับผลงาน, ทีม KM, คณะกรรมการบริหารความเสี่ยงและความปลอดภัย (RM/PSG), คณะกรรมการกำกับดูแลวิชาชีพ (แพทย์/พยาบาล/สหวิชาชีพ), คณะกรรมการพัฒนาคุณภาพ", "units": [{"n": "งานประชาสัมพันธ์ / จุดรับข้อร้องเรียน", "pts": "การจัดการ feedback และข้อร้องเรียนของผู้ป่วย, สิทธิผู้ป่วย, การนำข้อมูลมาปรับปรุงบริการ", "ppl": "งานประชาสัมพันธ์/รับเรื่องร้องเรียน, ทีม KM"}, {"n": "[HAIT] ห้อง IT / Service Desk / ห้อง Server (รวมตรวจ HA I-4 ในห้องเดียวกัน)", "pts": "นโยบาย+ระเบียบ และผลประเมินความรับรู้-เข้าใจ-ปฏิบัติของบุคลากรทุกคน; การ update patch; Firewall; การคุมสถานีงาน/USB/Mobile; สิทธิ์ admin; ประกาศ SLA; ระบบเก็บ incident และบันทึกกิจกรรม IT รายวัน (ต้องเริ่มเก็บแล้ว); HA I-4: ระบบสารสนเทศและตัวชี้วัด, ความถูกต้อง/ทันเวลาของข้อมูล HIS, มาตรการป้องกันข้อมูลรั่วไหลและ PDPA", "ppl": "หัวหน้า IT/ผู้ดูแลระบบ, เจ้าหน้าที่ IT ทุกคน, ตัวแทนผู้ใช้ระบบ, ผู้รับผิดชอบ PDPA, ทีม KM"}, {"n": "ห้องประชุมทบทวนความเสี่ยง (Risk register) / แฟ้ม credentialing", "pts": "แนวโน้มอุบัติการณ์สำคัญ, การทบทวนขอบเขตงานตามใบประกอบวิชาชีพ", "ppl": "ทีม RM, คณะกรรมการ Patient Safety, ฝ่ายแพทย์, ฝ่ายการพยาบาล"}], "hait": null}, {"label": "3", "date": "2026-12-16", "backup": "2026-12-23", "month": "ธ.ค. 2569", "theme": "เวชระเบียน การตรวจวินิจฉัย และการจัดการด้านยา", "std": ["II-5 ระบบเวชระเบียน (Medical Record System) — ความสมบูรณ์/ความลับ", "II-6 ระบบการจัดการด้านยา (Medication Management) — ตั้งแต่สั่ง-จ่าย-บริหารยา, ยา High-Alert", "II-7 การตรวจวินิจฉัย (II-7.1 รังสี, II-7.3 ธนาคารเลือด-บทใหม่, II-7.5 อื่นๆ)"], "comm": "คณะกรรมการเวชระเบียน/IM, คณะกรรมการเภสัชกรรมและการบำบัด (PTC), ทีม Medication Safety, ทีมห้องปฏิบัติการ/คณะกรรมการธนาคารเลือด, ทีมรังสี/ความปลอดภัยจากรังสี", "units": [{"n": "เวชระเบียน", "pts": "ความครบถ้วน/เข้าถึงได้ทันเวลาของเวชระเบียน, การรักษาความลับผู้ป่วย", "ppl": "งานเวชระเบียน"}, {"n": "LAB", "pts": "ความถูกต้อง/ทันเวลาของผลตรวจ, การควบคุมคุณภาพภายใน-ภายนอก, ธนาคารเลือด", "ppl": "นักเทคนิคการแพทย์, งานธนาคารเลือด"}, {"n": "X-ray", "pts": "ความปลอดภัยจากรังสี, คุณภาพภาพถ่ายทางรังสี", "ppl": "รังสีเทคนิค"}, {"n": "ยา (คลังยา/จุดจ่ายยา/ตู้ High-Alert/รถ Emergency)", "pts": "ความปลอดภัยยา High-Alert, การจัดเก็บยาตามมาตรฐาน, การตรวจสอบวันหมดอายุ", "ppl": "เภสัชกร, พยาบาลหัวหน้าหอผู้ป่วย"}], "hait": {"n": "[HAIT] ฝ่าย IT — ทะเบียนทรัพยากร / ห้อง Network", "pts": "ทะเบียน Hardware/Software/Network + Network Diagram; ผล Utilization ของ Server; Competency ของ IT ทุกคน (รวม CIO) และแผนพัฒนารายบุคคล; แผน BCP/DRP ฉบับร่างถึงฉบับใช้งาน; ตรวจโปรแกรมละเมิดลิขสิทธิ์", "ppl": "หัวหน้า IT, เจ้าหน้าที่ IT, HR, งานพัสดุ, CIO"}, "commH": "คณะทำงานไซเบอร์, คณะกรรมการ IT, งานพัสดุ", "stdH": "HAIT หมวด 7 ศักยภาพ/สมรรถนะ (ทะเบียน HW/SW/Network, Utilization, Competency IT) | HAIT Plus 1.9 BCP, 1.10 DRP, 2.23 ลิขสิทธิ์ซอฟต์แวร์, 2.24 แยกเครือข่าย EMR"}, {"label": "4", "date": "2027-01-20", "backup": "2027-01-27", "month": "ม.ค. 2570", "theme": "การดูแลผู้ป่วยทั่วไป ความเสี่ยงสูง และบริการเฉพาะ (ทันตกรรม/ผู้ป่วยใน/ห้องคลอด/โภชนบำบัด)", "std": ["III-4.1 การดูแลทั่วไป", "III-4.2 ผู้ป่วย/บริการความเสี่ยงสูง", "III-4.3ก การระงับความรู้สึก", "III-4.3ข การผ่าตัด", "III-4.3ค อาหารและโภชนบำบัด"], "comm": "PCT ศัลยกรรม/สูติกรรม/อายุรกรรม, คณะกรรมการวิสัญญี/ห้องผ่าตัด, ทีมทันตกรรม, ทีมโภชนบำบัด, ทีม Patient Safety (ผู้ป่วยเสี่ยงสูง/RRS)", "units": [{"n": "ทันตกรรม", "pts": "ความปลอดภัยหัตถการทันตกรรม, การป้องกันการติดเชื้อในคลินิกทันตกรรม", "ppl": "ทันตแพทย์/ทันตาภิบาล"}, {"n": "IPD", "pts": "การเฝ้าระวังผู้ป่วยความเสี่ยงสูง, ความต่อเนื่องของการดูแล", "ppl": "พยาบาล IPD, แพทย์เจ้าของไข้"}, {"n": "LR (ห้องคลอด)", "pts": "ความปลอดภัยการคลอด, การเฝ้าระวังภาวะฉุกเฉินทางสูติกรรม", "ppl": "ทีม LR/สูติ"}, {"n": "โรงครัว (มุมโภชนบำบัดผู้ป่วยใน)", "pts": "โภชนบำบัดตามภาวะโรค, การประเมินภาวะโภชนาการผู้ป่วยเสี่ยง", "ppl": "นักโภชนาการ"}], "hait": {"n": "[HAIT] ฝ่าย IT + ทีม RM + เวชระเบียน — ทะเบียนความเสี่ยง IT / ผลตรวจรอบ 1", "pts": "ผลสำรวจจุดอ่อน/ช่องโหว่ประจำปี, ผลคะแนนความเสี่ยง PxI, แผนกลยุทธ์และแผนปฏิบัติการจัดการความเสี่ยง IT; ขั้นตอนเผชิญเหตุไซเบอร์ + รายงานเหตุผ่านระบบ RM เดียวกัน; ผลตรวจคุณภาพเวชระเบียน OPD/IPD และรหัส ICD รอบที่ 1 (ตามแนวทาง TMI; เกณฑ์แต่ละหัวข้อไม่ต่ำกว่า 80%)", "ppl": "หัวหน้า IT, ทีม RM, CIO, ตัวแทนฝ่ายแพทย์/พยาบาล, งานเวชระเบียน/Coder, แพทย์ผู้สุ่มตรวจ"}, "commH": "คณะทำงานไซเบอร์ ร่วมกับ คณะกรรมการ RM/PSG, คณะกรรมการเวชระเบียน/IM (ตรวจคุณภาพ OPD-IPD-ICD)", "stdH": "HAIT หมวด 2 การจัดการความเสี่ยงระบบ IT (ช่องโหว่, คะแนน PxI, แผนกลยุทธ์ 4 ตาราง, แผนปฏิบัติการ) | HAIT หมวด 5 คุณภาพข้อมูล/ICD (ผลตรวจรอบที่ 1) | HAIT Plus 1.5, 1.8, 3.30 (ถ้าอยู่ในแผน)"}, {"label": "5", "date": "2027-02-17", "backup": "2027-02-24", "month": "ก.พ. 2570", "theme": "ฟื้นฟู แพทย์แผนไทย ดูแลต่อเนื่อง งานชุมชน เฝ้าระวังโรค และ Digital Care", "std": ["III-4.3ง การดูแลแบบประคับประคอง, III-4.3จ การจัดการความปวด, III-4.3ฉ การฟื้นฟูสภาพ,", "III-4.3ช โรคไตเรื้อรัง, III-4.3ซ การแพทย์แผนไทย, III-4.3ฌ Tele-Medicine, III-4.3ญ Home-based care,", "III-4.3ฎ การดูแลผู้ป่วยวิกฤต (บทใหม่)", "III-5 การให้ข้อมูล/เสริมพลังแก่ผู้ป่วย/ครอบครัว", "III-6 การดูแลต่อเนื่อง", "II-8 การเฝ้าระวังโรคและภัยสุขภาพ", "II-9 การทำงานกับชุมชน", "II-10 การดูแลผู้ป่วยโดยใช้เทคโนโลยีดิจิทัล (บทใหม่)"], "comm": "PCT ที่เกี่ยวข้อง (ประคับประคอง/ไต/วิกฤต), ทีมเวชศาสตร์ฟื้นฟู, ทีมการแพทย์แผนไทย, ทีมเยี่ยมบ้าน/ดูแลต่อเนื่อง (HHC), ทีมจำหน่าย/ส่งต่อ, ทีมเฝ้าระวังโรค (SRRT), ทีม Digital Health", "units": [{"n": "กายภาพบำบัด", "pts": "การฟื้นฟูสภาพ/สมรรถภาพผู้ป่วย, การจัดการความปวด", "ppl": "นักกายภาพบำบัด"}, {"n": "แผนไทย", "pts": "การแพทย์แผนไทยเป็นทางเลือก/เสริมการรักษา, ความปลอดภัยการใช้สมุนไพร", "ppl": "แพทย์/พยาบาลแผนไทย"}, {"n": "ปฐมภูมิ (ดูแลต่อเนื่อง/เยี่ยมบ้าน + งานเชิงรุกชุมชน)", "pts": "การให้ความรู้ผู้ป่วย/ครอบครัว, การส่งต่อ/นัดติดตาม, home-based care, ผู้ป่วยประคับประคอง; ระบบเฝ้าระวังโรคระบาด, งานสร้างเสริมสุขภาพชุมชน, การใช้ digital/telemedicine", "ppl": "พยาบาลปฐมภูมิ/เยี่ยมบ้าน, นักสังคมสงเคราะห์, งานเวชกรรมสังคม, ฝ่าย IT/Digital Health"}], "hait": {"n": "[HAIT] ห้อง Data Center (Server Room) + สัญญา PACS/LIS + Backup", "pts": "ขนาด/ที่ตั้ง, การจัดระเบียบสายไฟ-สายสัญญาณ, ระบบตรวจจับควัน, วัดอุณหภูมิ/ความชื้น, ระบบดับเพลิง, ควบคุมการเข้าออก + ระเบียบ; คู่มือดูแลห้อง Data Center; สัญญาผู้ให้บริการ PACS/LIS; Backup Off Line ของ EMR/PACS/LIS และทดสอบกู้คืนได้จริง", "ppl": "หัวหน้า IT, วิศวกรรมความปลอดภัย/อาคารสถานที่, ทีม ENV, นักเทคนิคการแพทย์ (LIS), รังสีเทคนิค (PACS)"}, "commH": "คณะทำงานไซเบอร์, คณะกรรมการ ENV, ผู้แทนห้อง Lab/รังสี (PACS/LIS)", "stdH": "HAIT หมวด 3.7 Data Center | HAIT Plus 1.12 ระบบเสริมความปลอดภัยห้อง Data Center | HAIT Plus 1.11 สัญญา PACS/LIS, 1.16 สำรองข้อมูล Off Line"}, {"label": "6", "date": "2027-03-17", "backup": "2027-03-24", "month": "มี.ค. 2570", "theme": "สิ่งแวดล้อมในการดูแลและการป้องกันควบคุมการติดเชื้อ", "std": ["II-3 สิ่งแวดล้อมในการดูแลผู้ป่วย (Environment of Care) — ความปลอดภัยอาคาร/เครื่องมือ/อัคคีภัย", "II-4 การป้องกันและควบคุมการติดเชื้อ (IC) — sterilization, การจัดการของเสีย/น้ำเสีย"], "comm": "คณะกรรมการป้องกันและควบคุมการติดเชื้อ (IC), คณะกรรมการสิ่งแวดล้อมและความปลอดภัย (ENV)", "units": [{"n": "จ่ายกลาง (CSSD)", "pts": "กระบวนการทำให้ปราศจากเชื้อ, การตรวจสอบประสิทธิภาพการทำลายเชื้อ", "ppl": "ทีม IC, เจ้าหน้าที่จ่ายกลาง"}, {"n": "ซักฟอก", "pts": "การจัดการผ้าเปื้อน/ผ้าสะอาด แยกเส้นทางชัดเจน", "ppl": "ทีม IC, เจ้าหน้าที่ซักฟอก"}, {"n": "โรงครัว (มุมสุขาภิบาลการผลิตอาหาร)", "pts": "ความสะอาดกระบวนการผลิต, การจัดเก็บวัตถุดิบ, สุขวิทยาผู้ปรุง", "ppl": "ทีม IC, อนามัยสิ่งแวดล้อม, หัวหน้าโรงครัว"}, {"n": "บ่อบำบัดน้ำเสีย", "pts": "คุณภาพน้ำทิ้งก่อนปล่อยออก, การจัดการขยะติดเชื้อ", "ppl": "วิศวกรรมความปลอดภัย/อาคารสถานที่, อนามัยสิ่งแวดล้อม"}], "hait": {"n": "[HAIT] ฝ่าย IT + เวชระเบียน — สิทธิ์เข้าถึง EMR, รายงานซ้อม BCP/DRP", "pts": "สิทธิ์เข้าถึง EMR เฉพาะผู้รับผิดชอบผู้ป่วยรายนั้น; การตรวจ log; Two-factor (ถ้าอยู่ในแผน); เข้ารหัสข้อมูลที่ส่งออก; รายงานผลซ้อม BCP และ DRP (วัน เวลา ผู้เข้าร่วม ผลจริง); Backup Cloud/Off Line และทดสอบกู้คืน", "ppl": "หัวหน้า IT, งานเวชระเบียน/Coder, ผู้รับผิดชอบ PDPA, CIO"}, "commH": "คณะทำงานไซเบอร์, คณะกรรมการเวชระเบียน/IM", "stdH": "HAIT Plus 1.17, 3.32, 3.33, 3.35 (การเข้าถึง EMR/ล็อก/2FA) | 2.21, 2.22 รายงานผลซ้อม BCP/DRP | 2.27, 2.28 สำรองข้อมูล Cloud/Off Line"}, {"label": "7", "date": "2027-04-07", "backup": "2027-04-08", "month": "เม.ย. 2570", "theme": "ซ้อมรับตรวจ (ก่อนเยี่ยมสำรวจ HA เดือน พ.ค.)", "std": ["ตามรอยข้ามบท: III-1 ถึง III-6 (ตามรอยผู้ป่วย), II-6 (ตามรอยยา), II-7 (ตามรอยสิ่งส่งตรวจ), II-5 (ตามรอยข้อมูล)", "ตอนที่ IV ผลการดำเนินการ (IV-1 ถึง IV-6)", "ภาคผนวก 1 Scoring Guideline — ซ้อมให้คะแนนตนเองรายบท"], "comm": "คณะกรรมการพัฒนาคุณภาพ/ทีมนำ HA, PCT ที่เกี่ยวข้อง, ทีม Patient Safety/Medication Safety, ทีมตัวชี้วัด/สารสนเทศ, เจ้าของตัวชี้วัดตอน IV", "units": [{"n": "ตามรอยผู้ป่วยตัวอย่าง 2-3 ราย ข้ามหน่วย (คัดกรอง → OPD/ER → LAB/X-ray → ยา → IPD/จำหน่าย)", "pts": "ความต่อเนื่องและจุดส่งต่อ (handoff) ระหว่างหน่วย, การเฝ้าระวังอาการเปลี่ยนแปลง, การให้ข้อมูลผู้ป่วย/ครอบครัว", "ppl": "ทีม HA, ตัวแทน PCT, พยาบาล/แพทย์ของหน่วยที่ตามรอย"}, {"n": "ตามรอยยา High-Alert และสิ่งส่งตรวจ จากการสั่งถึงข้างเตียง/รายงานผล", "pts": "ความปลอดภัยของยา, ความทันเวลาและความถูกต้องของผลตรวจ", "ppl": "เภสัชกร, นักเทคนิคการแพทย์, พยาบาลหอผู้ป่วย"}, {"n": "ทบทวนตัวชี้วัดตอน IV และซ้อมให้คะแนนตนเองรายบท (HA Scoring)", "pts": "ข้อมูลสะสมและแนวโน้มตัวชี้วัดกับเจ้าของตัวชี้วัด, ระดับคะแนนกระบวนการ/ผลลัพธ์รายบท, ตรวจ SAR ฉบับสมบูรณ์", "ppl": "หัวหน้ากลุ่มงาน, เจ้าของตัวชี้วัด, ทีม HA"}, {"n": "เดินซ้ำหน่วยที่มี gap สูงหรือคะแนนตนเองต่ำ", "pts": "ยืนยันการปฏิบัติจริงและการปิด gap จากรอบ ต.ค.-มี.ค. ก่อนผู้เยี่ยมมา", "ppl": "ทีม HA, หัวหน้าหน่วย"}], "hait": {"n": "[HAIT] ทุกหมวด — ทบทวนแฟ้มเอกสาร 7 หมวด ก่อนประเมินเดือน มิ.ย.", "pts": "ประเมินตนเอง 7 หมวด (ไม่ได้ทำ/บางส่วน/ทำแล้ว) พร้อมหลักฐาน; วิเคราะห์ SLA/อุบัติการณ์/กิจกรรม IT (ข้อมูลสะสมอย่างน้อย 3-6 เดือน); ผลตรวจเวชระเบียน/ICD รอบที่ 2 โดยผู้ตรวจภายนอก; เอกสารวิเคราะห์-ออกแบบโปรแกรม (ถ้ามี); ผลทดสอบเจาะระบบ (ถ้าอยู่ในแผน); รายงานผลดำเนินการ", "ppl": "ผอ., CIO, หัวหน้า IT, หัวหน้าฝ่ายพัฒนาคุณภาพ, ทีม HAIT"}, "commH": "คณะทำงานไซเบอร์, คณะกรรมการ IT, คณะกรรมการเวชระเบียน/IM, ผู้บริหาร", "stdH": "HAIT ทั้ง 7 หมวด ทบทวนความพร้อมก่อนประเมิน | หมวด 4 วิเคราะห์ SLA/incident/กิจกรรม IT | หมวด 5 ผลตรวจรอบที่ 2 (มีผู้ตรวจภายนอก) | หมวด 6 (ถ้ามี) | HAIT Plus 1.19, 1.20, 2.29, 3.31, 3.34, 3.36-3.39 ตามที่เลือกทำ, บทที่ 4 รายงาน"}], "phases": [{"key": "survey", "label": "เยี่ยมสำรวจ HA", "month": "พ.ค. 2570", "theme": "เยี่ยมสำรวจ HA (ไม่มี round) และปิดเอกสาร HAIT", "std": ["HA: ผู้เยี่ยมสำรวจรับรู้บริบทและผลงาน ตามรอยระบบงาน และร่วมกำหนดประเด็นพัฒนา (IFI) กับ รพ.", "HAIT: ปิดเอกสาร 7 หมวดก่อนประเมิน"], "comm": "คณะกรรมการพัฒนาคุณภาพ/ทีมนำ HA, ผู้บริหาร, ทีมนำ/PCT ตามบทที่ผู้เยี่ยมตามรอย + คณะทำงานไซเบอร์/คณะกรรมการ IT (ฝั่ง HAIT)", "units": [{"n": "[HA] วันเยี่ยมสำรวจ (วันที่ให้ใส่ในชีท 'กำหนดการ Round')", "pts": "นำผู้เยี่ยมตามรอยระบบงาน (ผู้ป่วย กลุ่มโรค ยา สิ่งส่งตรวจ ข้อมูล); ส่งผลคะแนนตนเองและแผนพัฒนาตามที่ สรพ.กำหนด; เอกสารสำหรับ verify จัดเป็นหมวดหมู่ที่ รพ.; ร่วมกำหนดประเด็นพัฒนา (IFI); ทำให้เห็นผลเป็นรูปธรรมตามเกณฑ์ที่จำเป็นต่อความปลอดภัย", "ppl": "ผอ., ทีมนำ HA, หัวหน้ากลุ่มงานและหน่วยที่ถูกตามรอย"}, {"n": "[HAIT] ปิดเอกสาร 7 หมวด", "pts": "ทบทวนแฟ้มเอกสารครบตามเอกสาร HAIT Star; ข้อมูล Service Desk/incident/กิจกรรม IT ยังบันทึกต่อเนื่อง; ยืนยันวันประเมินกับ TMI/ผู้ประเมิน", "ppl": "หัวหน้า IT, CIO, หัวหน้าฝ่ายพัฒนาคุณภาพ, ทีม HAIT"}]}, {"key": "haitA", "label": "ประเมิน HAIT", "month": "มิ.ย. 2570", "theme": "ประเมิน HAIT (ไม่มี round) และปิดประเด็นพัฒนา (IFI) จากผู้เยี่ยม HA", "std": ["HAIT 7 หมวด และ HAIT Plus ตามระดับที่เลือก", "HA: ปิดประเด็นพัฒนา (IFI) จากผู้เยี่ยม"], "comm": "คณะกรรมการพัฒนาคุณภาพ/ทีมนำ HA + คณะทำงานไซเบอร์/คณะกรรมการ IT, ผู้บริหาร", "units": [{"n": "[HAIT] ประเมิน HAIT / ตอบข้อซักถาม", "pts": "นำเสนอเอกสารและหลักฐานตามหมวด; เตรียมผู้ตอบประจำหมวด; บันทึกข้อเสนอแนะจากผู้ประเมิน", "ppl": "ผอ./CIO, หัวหน้า IT, เจ้าหน้าที่ IT, งานเวชระเบียน, ทีม HAIT"}, {"n": "[HA] ปิดประเด็นพัฒนา (IFI) จากผู้เยี่ยม", "pts": "จัดลำดับ IFI, มอบผู้รับผิดชอบและกำหนดเสร็จ, ติดตามรายเดือน", "ppl": "ทีมนำ HA, หัวหน้าหน่วยที่เกี่ยวข้อง"}]}, {"key": "haitB", "label": "ประเมิน HAIT", "month": "ก.ค. 2570", "theme": "ประเมิน HAIT (ต่อ) และติดตาม IFI", "std": ["HAIT 7 หมวด และ HAIT Plus ตามระดับที่เลือก", "HA: ติดตาม IFI"], "comm": "คณะกรรมการพัฒนาคุณภาพ/ทีมนำ HA + คณะทำงานไซเบอร์/คณะกรรมการ IT", "units": [{"n": "[HAIT] ประเมิน HAIT (ต่อ)", "pts": "แก้ไข/เพิ่มหลักฐานตามข้อเสนอแนะระหว่างประเมิน; ข้อมูล Service Desk/incident ต่อเนื่อง", "ppl": "หัวหน้า IT, ทีม HAIT"}, {"n": "[HA] ติดตาม IFI", "pts": "ความคืบหน้าการปิด IFI และตัวชี้วัดตอน IV", "ppl": "ทีมนำ HA"}]}, {"key": "haitC", "label": "ประเมิน HAIT", "month": "ส.ค. 2570", "theme": "ประเมิน HAIT (สรุป) และเตรียมข้อมูลทบทวนสิ้นปีงบ", "std": ["HAIT 7 หมวด และ HAIT Plus ตามระดับที่เลือก", "เตรียมข้อมูลทบทวนสิ้นปีงบประมาณ"], "comm": "คณะกรรมการพัฒนาคุณภาพ/ทีมนำ HA + คณะทำงานไซเบอร์/คณะกรรมการ IT", "units": [{"n": "[HAIT] ประเมิน HAIT (สรุป)", "pts": "รับทราบผลและข้อเสนอแนะเบื้องต้น; รวบรวมข้อมูลกิจกรรมความมั่นคงปลอดภัยทั้งปีเพื่อทบทวน ก.ย.", "ppl": "หัวหน้า IT, ทีม HAIT"}, {"n": "[HA] ติดตาม IFI และเตรียมข้อมูลวางแผนปีงบ 2571", "pts": "สรุปสถานะ IFI, ผลตัวชี้วัดสะสมทั้งปี", "ppl": "ทีมนำ HA"}]}, {"key": "review", "label": "ทบทวนสิ้นปี + วางแผนต่อ", "month": "ก.ย. 2570", "theme": "ทบทวนสิ้นปีงบประมาณ และวางแผนปีงบ 2571", "std": ["HA: สรุปผลหลังเยี่ยมสำรวจ และแผนยกระดับ maturity (score 3/4/5)", "HAIT: ทบทวนสิ้นปีงบ (PDCA), รายงานประจำปี, เริ่มวงรอบใหม่"], "comm": "คณะกรรมการพัฒนาคุณภาพ/ทีมนำ HA, ผู้บริหาร + คณะทำงานไซเบอร์/คณะกรรมการ IT", "units": [{"n": "[HA] สรุปผลหลังเยี่ยมสำรวจและวางแผนพัฒนาต่อ", "pts": "นำข้อเสนอแนะ/IFI มาจัดทำแผนพัฒนาปีงบ 2571 พร้อมผู้รับผิดชอบและเวลา; ประเมินคะแนนตนเองใหม่และแผนยกระดับ maturity รายบท; ติดตามเกณฑ์ที่จำเป็นต่อความปลอดภัยที่ สรพ.ประกาศ; ตั้งวงรอบ round ปีใหม่ตามบทที่ยังมี gap; เก็บตัวชี้วัดตอน IV ต่อเนื่อง", "ppl": "ผอ., ทีมนำ HA, หัวหน้ากลุ่มงาน"}, {"n": "[HAIT] ทบทวนสิ้นปีงบประมาณและเริ่มวงรอบใหม่", "pts": "ทบทวนผลกิจกรรมความมั่นคงปลอดภัยทั้งปีตามหลัก PDCA (HAIT Plus 4.4) และรายงานประจำปี (4.2); ประเมินผลแผนปฏิบัติการ IT และแผนจัดการความเสี่ยงรายโครงการ (HAIT Star 1.6, 2.6); เริ่มวงรอบความเสี่ยงใหม่เมื่อขึ้นปีใหม่ (2.7); ประเมินความรับรู้-เข้าใจ-ปฏิบัติของบุคลากรรอบใหม่ (3.9); วางแผนปฏิบัติการ IT ปี 2571; ใช้ผลประเมิน HAIT กำหนดระดับดาวเป้าหมายต่อไป", "ppl": "ผอ./CIO, หัวหน้า IT, หัวหน้าฝ่ายพัฒนาคุณภาพ, ทีม HAIT"}]}], "holidays": [{"d": "2026-10-13", "n": "วันคล้ายวันสวรรคต ร.9"}, {"d": "2026-10-23", "n": "วันปิยมหาราช"}, {"d": "2026-12-05", "n": "วันพ่อแห่งชาติ"}, {"d": "2026-12-07", "n": "ชดเชยวันพ่อแห่งชาติ"}, {"d": "2026-12-10", "n": "วันรัฐธรรมนูญ"}, {"d": "2026-12-31", "n": "วันสิ้นปี"}, {"d": "2027-01-01", "n": "วันขึ้นปีใหม่"}, {"d": "2027-02-22", "n": "ชดเชยวันมาฆบูชา"}, {"d": "2027-04-06", "n": "วันจักรี"}, {"d": "2027-04-13", "n": "วันสงกรานต์"}, {"d": "2027-04-14", "n": "วันสงกรานต์"}, {"d": "2027-04-15", "n": "วันสงกรานต์"}, {"d": "2027-05-03", "n": "ชดเชยวันแรงงาน"}, {"d": "2027-05-04", "n": "วันฉัตรมงคล"}, {"d": "2027-05-20", "n": "วันวิสาขบูชา"}, {"d": "2027-06-03", "n": "วันเฉลิมฯ พระราชินี"}, {"d": "2027-07-19", "n": "ชดเชยวันอาสาฬหบูชา"}, {"d": "2027-07-28", "n": "วันเฉลิมฯ ร.10"}, {"d": "2027-08-12", "n": "วันแม่แห่งชาติ"}], "lead": [{"cat": "1 แผนแม่บท IT", "work": "ข้อมูลพื้นฐาน รพ., สรุปยุทธศาสตร์ รพ., ตารางเชื่อมยุทธศาสตร์ รพ.→IT, แผนยุทธศาสตร์ IT, แผนปฏิบัติการ IT อย่างน้อย 1 ปี, ประเมินผลปีที่ผ่านมา (ถ้ามี)", "rule": "แผนแม่บทครอบคลุม 3-5 ปี; แผนปฏิบัติการอย่างน้อย 1 ปี", "start": "ต.ค. 69", "finish": "ต.ค. 69 (รอบ 1)", "verify": "ต.ค. 69 (รอบ 1) และทบทวนความพร้อม เม.ย. 70", "risk": "ต่ำ ถ้ามียุทธศาสตร์ รพ.อยู่แล้ว"}, {"cat": "2 จัดการความเสี่ยง IT", "work": "ผลประเมินจุดอ่อนช่องโหว่, คะแนนความเสี่ยง PxI, แผนกลยุทธ์ 4 ตาราง, แผนปฏิบัติการปีปัจจุบัน, ประเมินผลปีที่ผ่านมา", "rule": "วงจรรายปี; การประเมินผลรอบปีเต็มต้องรอสิ้นปีงบ (ก.ย. 70)", "start": "พ.ย. 69", "finish": "ม.ค. 70 (รอบ 4)", "verify": "ม.ค. 70 (รอบ 4)", "risk": "กลาง: ผลประเมินรอบปีเต็มทำได้หลังสิ้นปีงบ (ก.ย. 70) ถ้าเป็นรอบแรกจะยังไม่มีผลประเมินปีก่อนให้แสดงตอนประเมิน"}, {"cat": "3 ความมั่นคงปลอดภัย", "work": "นโยบาย/ระเบียบ, ผลประเมินความรับรู้-เข้าใจ-ปฏิบัติของบุคลากรทุกคน, สรุปการปรับปรุง Data Center, HAIT Plus ข้อ A-R, คู่มือห้อง Data Center, คู่มือสำรองข้อมูล, BCP/DRP + รายงานผลซ้อม", "rule": "ต้องประเมินบุคลากร 'ทุกคน' และมีรายงานผลซ้อมแผนจริง", "start": "ต.ค. 69", "finish": "นโยบาย/ประเมินบุคลากร พ.ย. 69; Data Center ก.พ. 70; ซ้อมแผน BCP/DRP ภายใน ก.พ. 70", "verify": "พ.ย. 69, ธ.ค. 69, ก.พ. 70, มี.ค. 70", "risk": "สูง: ประเมินบุคลากรทุกคนและซ้อมแผนต้องจัดคิวกับหน้างาน และต้องเสร็จก่อน มิ.ย. 70"}, {"cat": "4 บริการ IT (Service Desk/SLA)", "work": "ระบบ Service Desk, ประกาศ SLA และผลตามข้อตกลง, บันทึกอุบัติการณ์, บันทึกกิจกรรมประจำวันของเจ้าหน้าที่ IT ทุกคนทุกวัน", "rule": "ต้องมีข้อมูลบันทึกอย่างน้อย 3-6 เดือน", "start": "พ.ย. 69 (ช้าสุดไม่เกิน ธ.ค. 69 เพื่อให้ได้ 6 เดือนก่อน มิ.ย. 70)", "finish": "พ.ย. 69 (ระบบพร้อมเก็บ)", "verify": "พ.ย. 69 (ระบบ), เม.ย. 70 (วิเคราะห์ข้อมูล)", "risk": "สูงสุด: ข้อมูลสะสมย้อนหลังเติมไม่ได้ ถ้าเริ่มหลัง ก.พ. 70 จะมีไม่ถึง 3 เดือนก่อนประเมินเดือน มิ.ย. 70"}, {"cat": "5 คุณภาพข้อมูล/ICD", "work": "ระบบตรวจคุณภาพเวชระเบียน OPD/IPD (กรรมการ วงรอบ จำนวนแฟ้มสุ่ม) และผลตรวจตามแนวทาง TMI", "rule": "ตรวจอย่างน้อยปีละ 2 ครั้ง โดยมีผู้ตรวจภายนอกอย่างน้อย 1 ครั้ง; คุณภาพแต่ละหัวข้อไม่ต่ำกว่า 80%", "start": "พ.ย. 69", "finish": "รอบ 1 ภายใน ม.ค. 70; รอบ 2 (มีผู้ตรวจภายนอก) ภายใน เม.ย. 70", "verify": "ม.ค. 70 (รอบ 4) และ เม.ย. 70 (รอบ 7)", "risk": "สูง: ต้องนัดผู้ตรวจภายนอกล่วงหน้า; ถ้าผลรอบ 1 ต่ำกว่า 80% เหลือเวลาแก้ราว 3 เดือน"}, {"cat": "6 พัฒนาโปรแกรม", "work": "วิเคราะห์ระบบเดิม-ใหม่, ออกแบบ (Context, DFD, ER, Data Dictionary) ต่อโปรแกรมที่พัฒนาใน 1 ปี", "rule": "ประเมินเฉพาะ รพ.ที่เขียนโปรแกรมใช้เอง", "start": "ถ้ามี: ธ.ค. 69", "finish": "เม.ย. 70", "verify": "เม.ย. 70 (รอบ 7)", "risk": "ต้องยืนยันก่อนว่า รพ.เข้าข่ายหมวดนี้หรือไม่"}, {"cat": "7 ศักยภาพ/สมรรถนะ", "work": "ทะเบียน HW/SW/Network + Network Diagram, ผลวิเคราะห์ Utilization (Server/Intranet/Internet), Competency mapping/dictionary/template, ผลประเมินรายบุคคล (รวม CIO) + แผนพัฒนา", "rule": "ต้องมีทั้งการประเมินและแผนพัฒนารายบุคคล", "start": "พ.ย. 69", "finish": "ธ.ค. 69 (รอบ 3)", "verify": "ธ.ค. 69 (รอบ 3)", "risk": "กลาง: งานเอกสารมาก"}, {"cat": "รายงาน/ทบทวน (HAIT Plus บทที่ 4)", "work": "รายงานผลดำเนินการ, รายงานประจำปี, การนำเสนอผลที่ประชุมผู้บริหารทุกเดือน, ทบทวนสิ้นปีงบประมาณ (PDCA)", "rule": "นำเสนอผู้บริหารทุกเดือน; ทบทวนทุกสิ้นปีงบประมาณ", "start": "ต.ค. 69", "finish": "ทุกเดือน; สรุปสิ้นปีงบ ก.ย. 70", "verify": "เม.ย. 70 (ความพร้อมก่อนประเมิน) และ ก.ย. 70 (ทบทวนสิ้นปีงบ)", "risk": "กลาง: สิ้นปีงบ (30 ก.ย. 70) อยู่หลังประเมิน ต้องเตรียมข้อมูลล่วงหน้า"}], "plus": [{"id": "1.1", "t": "การจัดตั้งคณะทำงาน", "lv": "พื้นฐาน", "when": "ต.ค. 69 (รอบ 1)"}, {"id": "1.2", "t": "การจัดทำแผนปฏิบัติการสร้างความมั่นคงปลอดภัยไซเบอร์ (รวม BIA, Security Baseline)", "lv": "พื้นฐาน", "when": "ต.ค. 69 (รอบ 1)"}, {"id": "1.3", "t": "การกำหนดนโยบาย มาตรฐาน ระเบียบปฏิบัติ", "lv": "พื้นฐาน", "when": "พ.ย. 69 (รอบ 2)"}, {"id": "1.4", "t": "การสร้างความตระหนักรู้ในบุคลากรทุกคน", "lv": "พื้นฐาน", "when": "พ.ย. 69 (รอบ 2)"}, {"id": "1.5", "t": "การจัดการความเสี่ยงในระบบ IT", "lv": "พื้นฐาน", "when": "ม.ค. 70 (รอบ 4)"}, {"id": "1.6", "t": "การ Update Patches (คอมพิวเตอร์ เครือข่าย เครื่องมือแพทย์)", "lv": "พื้นฐาน", "when": "พ.ย. 69 (รอบ 2)"}, {"id": "1.7", "t": "มาตรการตรวจสอบเฝ้าระวังภัยคุกคาม และควบคุมการเข้าถึงจากภายนอก", "lv": "พื้นฐาน", "when": "พ.ย. 69 (รอบ 2)"}, {"id": "1.8", "t": "มาตรการเผชิญเหตุและตอบสนองเมื่อเกิดภัยคุกคามไซเบอร์", "lv": "พื้นฐาน", "when": "ม.ค. 70 (รอบ 4)"}, {"id": "1.9", "t": "แผนดำเนินการอย่างต่อเนื่อง (BCP)", "lv": "พื้นฐาน", "when": "ธ.ค. 69 (รอบ 3)"}, {"id": "1.10", "t": "แผนกู้คืน (DRP)", "lv": "พื้นฐาน", "when": "ธ.ค. 69 (รอบ 3)"}, {"id": "1.11", "t": "ทบทวนสัญญาผู้ให้บริการภายนอก PACS และ LIS", "lv": "พื้นฐาน", "when": "ก.พ. 70 (รอบ 5)"}, {"id": "1.12", "t": "ระบบเสริมความมั่นคงปลอดภัยห้อง Data Center", "lv": "พื้นฐาน", "when": "ก.พ. 70 (รอบ 5)"}, {"id": "1.13", "t": "การติดตั้ง Firewall และตั้งค่าให้มั่นคงปลอดภัย", "lv": "พื้นฐาน", "when": "พ.ย. 69 (รอบ 2)"}, {"id": "1.14", "t": "ควบคุมการเข้าถึงสถานีงาน (Workstation) และเครื่องมือแพทย์", "lv": "พื้นฐาน", "when": "พ.ย. 69 (รอบ 2)"}, {"id": "1.15", "t": "ควบคุมการเข้าถึงสื่อบันทึกข้อมูลและ Mobile Devices", "lv": "พื้นฐาน", "when": "พ.ย. 69 (รอบ 2)"}, {"id": "1.16", "t": "สำรองข้อมูลแบบ Off Line ให้ฐานข้อมูล EMR, PACS, LIS", "lv": "พื้นฐาน", "when": "ก.พ. 70 (รอบ 5)"}, {"id": "1.17", "t": "เข้ารหัสข้อมูลผู้ป่วยที่ส่งออกนอกสถานพยาบาลทุกรายการ", "lv": "พื้นฐาน", "when": "มี.ค. 70 (รอบ 6)"}, {"id": "1.18", "t": "การจัดการการเข้าถึงที่มีสิทธิพิเศษ (Privileged Access)", "lv": "พื้นฐาน", "when": "พ.ย. 69 (รอบ 2)"}, {"id": "1.19", "t": "การพัฒนาซอฟต์แวร์ที่มั่นคงปลอดภัยขั้นต้น", "lv": "พื้นฐาน", "when": "เม.ย. 70 (รอบ 7) — ถ้า รพ.พัฒนาเอง"}, {"id": "1.20", "t": "การใช้เลขมาตรฐานด้านดิจิทัลและความมั่นคงปลอดภัยไซเบอร์", "lv": "พื้นฐาน", "when": "เม.ย. 70 (รอบ 7)"}, {"id": "2.21", "t": "ซ้อมตามแผน BCP", "lv": "ขั้นกลาง", "when": "มี.ค. 70 (รอบ 6) — ซ้อมให้เสร็จภายใน ก.พ. 70"}, {"id": "2.22", "t": "ซ้อมตามแผนกู้คืน DRP ทุกขั้นตอน", "lv": "ขั้นกลาง", "when": "มี.ค. 70 (รอบ 6) — ซ้อมให้เสร็จภายใน ก.พ. 70"}, {"id": "2.23", "t": "ไม่มีโปรแกรมละเมิดลิขสิทธิ์เหลืออยู่ในระบบ", "lv": "ขั้นกลาง", "when": "ธ.ค. 69 (รอบ 3)"}, {"id": "2.24", "t": "แยกเครือข่ายระบบเวชระเบียนอิเล็กทรอนิกส์ออกจากเครือข่ายทั่วไป", "lv": "ขั้นกลาง", "when": "ธ.ค. 69 (รอบ 3)"}, {"id": "2.25", "t": "เครื่องมือเฝ้าระวัง แจ้งเตือน และป้องกันการบุกรุก", "lv": "ขั้นกลาง", "when": "พ.ย. 69 (รอบ 2)"}, {"id": "2.26", "t": "เครื่องมือควบคุมการเข้าถึงจากระยะไกล", "lv": "ขั้นกลาง", "when": "พ.ย. 69 (รอบ 2)"}, {"id": "2.27", "t": "สำรองข้อมูลบน Cloud ให้ฐานข้อมูล EMR, PACS, LIS", "lv": "ขั้นกลาง", "when": "มี.ค. 70 (รอบ 6)"}, {"id": "2.28", "t": "สำรองข้อมูล Off Line ให้ฐานข้อมูลสำคัญทั้งหมด", "lv": "ขั้นกลาง", "when": "มี.ค. 70 (รอบ 6)"}, {"id": "2.29", "t": "การพัฒนาซอฟต์แวร์ที่มั่นคงปลอดภัยขั้นกลาง", "lv": "ขั้นกลาง", "when": "เม.ย. 70 (รอบ 7) — ถ้า รพ.พัฒนาเอง"}, {"id": "3.30", "t": "ทดสอบความตื่นตัว/การตอบสนองของบุคลากรต่อ Phishing", "lv": "ขั้นสูง", "when": "ม.ค. 70 (รอบ 4)"}, {"id": "3.31", "t": "ควบคุมความถูกต้องในการบันทึกข้อมูล (Input Validation)", "lv": "ขั้นสูง", "when": "เม.ย. 70 (รอบ 7)"}, {"id": "3.32", "t": "ควบคุมการเข้าถึง EMR เฉพาะผู้รับผิดชอบผู้ป่วยรายนั้น", "lv": "ขั้นสูง", "when": "มี.ค. 70 (รอบ 6)"}, {"id": "3.33", "t": "จัดเก็บ ตรวจสอบ และวิเคราะห์ Log Files สม่ำเสมอ", "lv": "ขั้นสูง", "when": "มี.ค. 70 (รอบ 6)"}, {"id": "3.34", "t": "ทดสอบเจาะระบบที่มีข้อมูลเวชระเบียนอิเล็กทรอนิกส์", "lv": "ขั้นสูง", "when": "เม.ย. 70 (รอบ 7)"}, {"id": "3.35", "t": "Two Factor Authentication สำหรับเข้าถึงระบบเวชระเบียน", "lv": "ขั้นสูง", "when": "มี.ค. 70 (รอบ 6)"}, {"id": "3.36", "t": "Zero Trust Network Access สำหรับการเข้าถึงระยะไกล", "lv": "ขั้นสูง", "when": "เม.ย. 70 (รอบ 7)"}, {"id": "3.37", "t": "เข้ารหัสข้อมูล EMR ใน Server, Workstation, Mobile ทุกเครื่อง", "lv": "ขั้นสูง", "when": "เม.ย. 70 (รอบ 7)"}, {"id": "3.38", "t": "Real Time Monitoring and Alerts ตรวจจับการบุกรุก", "lv": "ขั้นสูง", "when": "เม.ย. 70 (รอบ 7)"}, {"id": "3.39", "t": "ควบคุมความมั่นคงปลอดภัยในการใช้งาน API", "lv": "ขั้นสูง", "when": "เม.ย. 70 (รอบ 7)"}], "afternoon": [{"k": "a1", "d": "2026-10-28", "t": "Revise ตัวชี้วัด มาตรฐาน HA (Healthcare Accreditation)"}, {"k": "a2", "d": "2026-11-04", "t": "จัดทำ Hospital Profile"}, {"k": "a3", "d": "2026-11-11", "t": "ทบทวน SAR I-IV"}, {"k": "a4", "d": "2026-11-16", "t": "ทบทวนระบบงานสำคัญ"}, {"k": "a5", "d": "2026-11-18", "t": "ทบทวน PCT"}, {"k": "a6", "d": "2026-12-09", "t": "ส่งเอกสาร มาตรฐาน HA (Healthcare Accreditation)"}]};
+</script>
+<script>
+(function(){
+'use strict';
+/* ---------- helpers ---------- */
+const $ = (s, r) => (r || document).querySelector(s);
+function h(tag, props, ...kids){
+  const e = document.createElement(tag);
+  if (props) for (const k in props){
+    const v = props[k];
+    if (k === 'class') e.className = v;
+    else if (k === 'on') for (const ev in v) e.addEventListener(ev, v[ev]);
+    else if (v === true) e.setAttribute(k, '');
+    else if (v !== false && v != null) e.setAttribute(k, v);
+  }
+  for (const c of kids.flat(Infinity)){ if (c == null || c === false) continue; e.append(c.nodeType ? c : document.createTextNode(String(c))); }
+  return e;
+}
+const TH_M = ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const TH_MS = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const TH_D = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+const TH_DS = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+const pad = n => String(n).padStart(2, '0');
+const iso = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const todayISO = () => iso(new Date());
+const dayDiff = (a, b) => Math.round((parse(a) - parse(b)) / 86400000);
+function fmt(s, o){ o = o || {}; const d = parse(s); return (o.wd ? TH_D[d.getDay()] + ' ' : '') + d.getDate() + ' ' + (o.long ? TH_M[d.getMonth() + 1] : TH_MS[d.getMonth() + 1]) + (o.yr ? ' ' + (d.getFullYear() + 543) : ''); }
+function hm(m){ return pad(Math.floor(m / 60)) + '.' + pad(m % 60); }
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t);
+  toast.t = setTimeout(() => { t.hidden = true; }, 2600);
+}
+
+/* ---------- storage (per browser) ---------- */
+let storageOK = true;
+const store = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { storageOK = false; return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { storageOK = false; $('#foot').textContent = 'เครื่องนี้บันทึกอัตโนมัติไม่ได้ กด "สำรองข้อมูล" ในหน้าภาพรวมก่อนปิดหน้านี้'; } }
+};
+const DEF_DATES = () => ({ round: {}, backup: {}, aft: {}, aftStatus: {}, survey: '', haitFrom: '', haitTo: '', review: '2027-09-22' });
+const S = {
+  issues: store.get('ha.issues', []),
+  dates: Object.assign(DEF_DATES(), store.get('ha.dates', {})),
+  haitCat: store.get('ha.haitCat', {}),
+  plus: store.get('ha.plus', {})
+};
+const shared = { on: false, connecting: !!(window.claude && window.claude.use), db: null, user: null, uid: '', canWrite: true, names: {}, local: null };
+const save = () => { if (shared.on) return; store.set('ha.issues', S.issues); store.set('ha.dates', S.dates); store.set('ha.haitCat', S.haitCat); store.set('ha.plus', S.plus); };
+/* ===== ตั้งค่าครั้งเดียวโดยผู้ดูแล: วันลิงก์ Apps Script (ลงท้าย /exec) ตรงนี้ เช่น { url: 'https://script.google.com/macros/s/xxxx/exec' }
+   ถ้าใส่ไว้ ทุกคนที่เปิดไฟล์นี้จะถูกถามรหัสผ่านทีมและชื่อครั้งเดียว แล้วเชื่อมต่ออัตโนมัติ (อย่าใส่รหัสผ่านทีมในไฟล์นี้) ===== */
+const TEAM_DEFAULT = { url: 'https://script.google.com/macros/s/AKfycbzNuMEAxXk-33v1noUuscm56JBuTz5isg97mL7ExnUduPb2TG-oRhXsKl08JQ5M-MJOKQ/exec' };
+const remote = { cfg: store.get('ha.remote', null), timer: null, ok: false, err: '', ver: -1 };
+const POLL_MS = window.HA_POLL_MS || 6000;
+(function hashCfg(){
+  try {
+    const m = /[#&]cfg=([^&]+)/.exec(location.hash); if (!m) return;
+    const j = JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(m[1])))));
+    if (j && /^https:\/\//.test(j.url || '')) { remote.cfg = { url: j.url, key: j.key || '', name: (remote.cfg && remote.cfg.name) || '' }; store.set('ha.remote', remote.cfg); }
+    history.replaceState(null, '', location.pathname + location.search);
+  } catch (e) {}
+})();
+const ro = () => shared.on && !shared.canWrite;
+const nowISO = () => new Date().toISOString();
+const newId = () => 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const numOf = i => +i.no || (/^P(\d+)$/.exec(i.id) ? +(/^P(\d+)$/.exec(i.id)[1]) : 0);
+const labelOf = i => 'P' + String(numOf(i)).padStart(3, '0');
+const nextNo = () => S.issues.reduce((n, i) => Math.max(n, numOf(i)), 0) + 1;
+const nameOf = id => id ? (shared.provider === 'sheet' ? id : (shared.names[id] || 'สมาชิกทีม')) : '';
+function fail(e){
+  const c = e && e.code;
+  if (c === 'unauthorized') { toast('รหัสผ่านทีมไม่ถูกต้อง ตรวจที่หน้าภาพรวม'); return; }
+  if (ERR_TXT[c] || c === 'network') { toast(ERR_TXT[c] || 'เชื่อมต่อส่วนกลางไม่ได้ ลองอีกครั้ง'); return; }
+  toast(c === 'invalid_argument' ? 'ไม่มีสิทธิ์แก้ข้อมูลส่วนกลาง ขอสิทธิ์ผู้แก้ไขจากเจ้าของแอป' : c === 'quota_exceeded' ? 'พื้นที่เก็บข้อมูลเต็ม' : 'บันทึกไม่สำเร็จ ลองอีกครั้ง');
+}
+/* data writes: local (this browser) or shared (team) */
+async function putIssue(rec){
+  if (!shared.on){ const k = S.issues.findIndex(x => x.id === rec.id); if (k >= 0) S.issues[k] = rec; else S.issues.push(rec); save(); render(); return true; }
+  if (shared.provider === 'sheet') return remoteWrite({ action: 'put', issue: Object.assign({}, rec, { no: 0 }) });
+  try { const body = Object.assign({}, rec); delete body.id; body.updatedAt = nowISO(); body.updatedBy = shared.uid; await shared.db.collection('issues').doc(rec.id).set(body); return true; }
+  catch (e) { fail(e); return false; }
+}
+async function patchIssue(id, patch){
+  if (!shared.on){ const i = S.issues.find(x => x.id === id); if (i) Object.assign(i, patch); save(); render(); return true; }
+  if (shared.provider === 'sheet') return remoteWrite({ action: 'patch', id, patch });
+  try { await shared.db.collection('issues').doc(id).update(Object.assign({}, patch, { updatedAt: nowISO(), updatedBy: shared.uid })); return true; }
+  catch (e) { fail(e); return false; }
+}
+async function removeIssue(id){
+  if (!shared.on){ S.issues = S.issues.filter(i => i.id !== id); save(); render(); return true; }
+  if (shared.provider === 'sheet') return remoteWrite({ action: 'delete', id });
+  try { await shared.db.collection('issues').doc(id).delete(); return true; } catch (e) { fail(e); return false; }
+}
+async function mergeDoc(name, patch){
+  const ref = shared.db.doc('settings/' + name); const snap = await ref.get();
+  if (snap.exists) await ref.update(patch); else await ref.set(patch);
+}
+async function setDates(patch){
+  if (!shared.on){ for (const k in patch){ if (k === 'round' || k === 'backup' || k === 'aft' || k === 'aftStatus') { S.dates[k] = Object.assign(S.dates[k] || {}, patch[k]); } else S.dates[k] = patch[k]; } save(); render(); return true; }
+  if (shared.provider === 'sheet') return remoteWrite({ action: 'dates', patch });
+  try { await mergeDoc('dates', patch); return true; } catch (e) { fail(e); return false; }
+}
+async function setHait(kind, key, val){
+  if (!shared.on){ (kind === 'cat' ? S.haitCat : S.plus)[key] = val; save(); render(); return true; }
+  if (shared.provider === 'sheet') return remoteWrite({ action: 'hait', kind, key2: key, val });
+  try { await mergeDoc('hait', { [kind]: { [key]: val } }); return true; } catch (e) { fail(e); return false; }
+}
+const ERR_TXT = {
+  unauthorized: 'รหัสผ่านทีมไม่ถูกต้อง',
+  blocked: 'เบราว์เซอร์เชื่อมต่อ Google ไม่ได้ (ออฟไลน์ ถูกบล็อก หรือลิงก์ยังไม่เปิดให้ "ทุกคน")',
+  notfound: 'ไม่พบลิงก์นี้ (404) ตรวจว่าใช้ลิงก์ /exec จากการ Deploy',
+  notjson: 'ลิงก์ตอบกลับไม่ใช่ข้อมูลของแอป ตรวจว่า Deploy เป็น Web app และตั้งสิทธิ์เข้าถึงเป็น "ทุกคน"',
+  busy: 'ระบบกลางกำลังทำงาน ลองอีกครั้ง'
+};
+async function remoteGetJson(u){
+  let r; try { r = await fetch(u); } catch (e) { throw { code: 'blocked' }; }
+  if (r && r.status === 404) throw { code: 'notfound' };
+  let j; try { j = await r.json(); } catch (e) { throw { code: 'notjson' }; }
+  return j;
+}
+async function remoteCall(body){
+  let r;
+  try { r = await fetch(remote.cfg.url, { method: 'POST', body: JSON.stringify(Object.assign({ key: remote.cfg.key, by: shared.uid || '' }, body)) }); }
+  catch (e) { throw { code: 'blocked' }; }
+  if (r && r.status === 404) throw { code: 'notfound' };
+  let j; try { j = await r.json(); } catch (e) { throw { code: 'notjson' }; }
+  if (!j.ok) throw { code: j.error || 'error' };
+  return j;
+}
+async function remoteWrite(body){ try { applyRemote(await remoteCall(body)); remote.ok = true; remote.err = ''; return true; } catch (e) { if (e && ERR_TXT[e.code] && e.code !== 'unauthorized' && e.code !== 'busy') { remote.ok = false; remote.err = e.code; } fail(e); return false; } }
+function applyRemote(j, quiet){
+  S.issues = (j.issues || []).map(i => Object.assign({}, i));
+  const d = j.dates || {}; S.dates = Object.assign(DEF_DATES(), d);
+  ['round', 'backup', 'aft', 'aftStatus'].forEach(k => { S.dates[k] = Object.assign({}, d[k] || {}); });
+  const hh = j.hait || {}; S.haitCat = Object.assign({}, hh.cat || {}); S.plus = Object.assign({}, hh.plus || {});
+  if (typeof j.ver === 'number') remote.ver = j.ver;
+  store.set('ha.remoteCache', j);
+  if (!quiet) render();
+}
+async function refreshRemote(){
+  if (!remote.cfg || !remote.cfg.url) return;
+  try {
+    const u = remote.cfg.url + (remote.cfg.url.indexOf('?') >= 0 ? '&' : '?') + 'key=' + encodeURIComponent(remote.cfg.key || '') + '&t=' + Date.now();
+    const j = await remoteGetJson(u);
+    if (j.ok){ remote.ok = true; remote.err = ''; applyRemote(j); } else { remote.ok = false; remote.err = j.error || 'error'; render(); }
+  } catch (e) { remote.ok = false; remote.err = (e && e.code) || 'blocked'; render(); }
+}
+function openJoin(){
+  openSheet((sheet, close) => {
+    const key = h('input', { type: 'text', placeholder: 'รหัสผ่านทีม', autocomplete: 'off' });
+    const nm = h('input', { type: 'text', placeholder: 'ชื่อของคุณ' });
+    const msg = h('div');
+    sheet.append(
+      h('div', { class: 'hd' }, h('h2', null, 'เข้าร่วมทีม'), closeBtn(close)),
+      h('p', { class: 'small muted', style: 'margin:0 0 4px' }, 'ใส่รหัสผ่านทีมที่ได้รับและชื่อของคุณ ถามครั้งเดียวต่อเครื่อง จากนั้นประเด็นจะซิงก์กับทุกคนในทีม'),
+      h('label', null, 'รหัสผ่านทีม'), key, h('label', null, 'ชื่อของคุณ (แสดงเป็นผู้บันทึก)'), nm, msg,
+      h('div', { class: 'row', style: 'margin-top:14px' },
+        h('button', { class: 'btn', on: { click: async () => {
+          if (!key.value.trim() || !nm.value.trim()){ msg.textContent = ''; msg.append(h('div', { class: 'warnbox' }, 'ใส่รหัสผ่านและชื่อก่อน')); return; }
+          remote.cfg = { url: TEAM_DEFAULT.url, key: key.value.trim(), name: nm.value.trim() }; store.set('ha.remote', remote.cfg);
+          await initRemote();
+          if (remote.ok){ toast('เข้าร่วมทีมแล้ว'); close(); }
+          else { const code = remote.err; disconnectRemote(); msg.textContent = ''; msg.append(h('div', { class: 'warnbox' }, ERR_TXT[code] || 'เชื่อมต่อไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองอีกครั้ง')); }
+        } } }, 'เข้าร่วม'),
+        h('button', { class: 'btn ghost', on: { click: close } }, 'ใช้เฉพาะเครื่องนี้')));
+  });
+}
+async function pollRemote(){
+  if (!remote.cfg || !remote.cfg.url || document.hidden) return;
+  try {
+    const u = remote.cfg.url + (remote.cfg.url.indexOf('?') >= 0 ? '&' : '?') + 'action=ver&key=' + encodeURIComponent(remote.cfg.key || '') + '&t=' + Date.now();
+    const j = await remoteGetJson(u);
+    if (!j.ok){ remote.ok = false; remote.err = j.error || 'error'; render(); return; }
+    if (!remote.ok){ remote.ok = true; remote.err = ''; }
+    if (j.ver !== remote.ver) await refreshRemote();
+  } catch (e) { if (remote.ok){ remote.ok = false; remote.err = (e && e.code) || 'blocked'; render(); } }
+}
+async function initRemote(){
+  clearInterval(remote.timer);
+  if (!shared.local) shared.local = { issues: store.get('ha.issues', []) };
+  shared.provider = 'sheet'; shared.on = true; shared.connecting = false; shared.canWrite = true; shared.uid = (remote.cfg && remote.cfg.name) || '';
+  const cache = store.get('ha.remoteCache', null);
+  if (cache) applyRemote(cache, true); else { S.issues = []; S.dates = DEF_DATES(); S.haitCat = {}; S.plus = {}; }
+  render();
+  await refreshRemote();
+  remote.timer = setInterval(pollRemote, POLL_MS);
+  if (!initRemote.bound) { initRemote.bound = true; document.addEventListener('visibilitychange', () => { if (!document.hidden && remote.cfg) refreshRemote(); }); }
+}
+function disconnectRemote(){
+  clearInterval(remote.timer); remote.timer = null; remote.cfg = null; remote.ok = false;
+  try { localStorage.removeItem('ha.remote'); localStorage.removeItem('ha.remoteCache'); } catch (e) {}
+  shared.on = false; shared.provider = ''; shared.uid = ''; shared.canWrite = true;
+  S.issues = store.get('ha.issues', []); S.dates = Object.assign(DEF_DATES(), store.get('ha.dates', {})); S.haitCat = store.get('ha.haitCat', {}); S.plus = store.get('ha.plus', {});
+  render();
+}
+function cfgLink(){
+  const raw = btoa(unescape(encodeURIComponent(JSON.stringify({ url: remote.cfg.url, key: remote.cfg.key }))));
+  return location.href.split('#')[0] + '#cfg=' + encodeURIComponent(raw);
+}
+function loadNames(ids){
+  if (!shared.on || !shared.user || !ids.length) return;
+  const need = ids.filter(id => id && !(id in shared.names)); if (!need.length) return;
+  need.forEach(id => { shared.names[id] = ''; });
+  shared.user.profiles(need).then(ps => { let ch = false; need.forEach(id => { const n = (ps[id] && ps[id].name) || ''; if (n) { shared.names[id] = n; ch = true; } }); if (ch) render(); }).catch(() => {});
+}
+
+/* ---------- plan model ---------- */
+const MONTHS = []; for (let i = 0; i < 12; i++){ const m = ((9 + i) % 12) + 1; MONTHS.push({ y: m >= 10 ? 2026 : 2027, m }); }
+const SESS = DATA.sessions.map(s => Object.assign({}, s, { units: s.units.map(u => Object.assign({}, u)) }));
+const PHASE = {}; DATA.phases.forEach(p => { PHASE[p.key] = p; });
+const HOL = {}; DATA.holidays.forEach(x => { HOL[x.d] = x.n; });
+const effDate = s => S.dates.round[s.label] || s.date;
+const AFT = DATA.afternoon || [];
+const aftDate = a => (S.dates.aft && S.dates.aft[a.k]) || a.d;
+const aftStat = a => (S.dates.aftStatus && S.dates.aftStatus[a.k]) || 'ยังไม่ทำ';
+const aftOn = d => AFT.filter(a => aftDate(a) === d);
+const AFT_STATS = ['ยังไม่ทำ', 'กำลังทำ', 'เสร็จแล้ว'];
+const addDays = (d, n) => { const x = parse(d); x.setDate(x.getDate() + n); return iso(x); };
+const effBackup = s => (S.dates.backup && S.dates.backup[s.label]) || (S.dates.round[s.label] ? addDays(S.dates.round[s.label], 7) : s.backup);
+function phaseOfMonth(y, m){
+  if (y === 2027 && m === 5) return 'survey';
+  if (y === 2027 && m >= 6 && m <= 8) return 'hait';
+  if (y === 2027 && m === 9) return 'review';
+  return 'round';
+}
+const KIND_LABEL = { round: 'รอบ round', survey: 'เยี่ยมสำรวจ HA', hait: 'ประเมิน HAIT', review: 'ทบทวนสิ้นปีงบ' };
+function slots(units){
+  const n = units.length; const len = Math.floor((75 - 3 * (n - 1)) / n); let t = 8 * 60 + 35; const out = [];
+  units.forEach(() => { out.push([t, t + len]); t += len + 3; });
+  return out;
+}
+const cleanUnit = n => n.replace(/^\[HAIT\]\s*/, 'HAIT: ');
+const workOf = i => i.work || (/^HAIT/.test(i.unit || '') || /HAIT/i.test(i.std || '') ? 'HAIT' : 'HA');
+const segs = txt => { const p = String(txt || '').split(' + '); return p.length > 1 ? [h('span', null, p[0] + ' '), h('span', { class: 'ht' }, '+ ' + p.slice(1).join(' + '))] : [txt]; };
+const isOpen = i => i.status !== 'ปิดแล้ว';
+const isOver = i => isOpen(i) && i.due && i.due < todayISO();
+const openFor = (round, unit) => S.issues.filter(i => isOpen(i) && i.round === round && (!unit || i.unit === unit)).length;
+
+/* ---------- UI state ---------- */
+const ui = { tab: 'cal', mi: 0, f: { st: 'open', round: '', risk: '', work: '' } };
+(function initMonth(){
+  const t = new Date(), y = t.getFullYear(), m = t.getMonth() + 1;
+  const i = MONTHS.findIndex(x => x.y === y && x.m === m); ui.mi = i >= 0 ? i : 0;
+})();
+
+/* ---------- layer / sheets ---------- */
+let lastFocus = null;
+function openSheet(build){
+  lastFocus = document.activeElement;
+  const layer = $('#layer'); layer.textContent = '';
+  const close = () => { layer.textContent = ''; document.removeEventListener('keydown', onKey); if (lastFocus && lastFocus.focus) lastFocus.focus(); };
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  const sheet = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true' });
+  const bd = h('div', { class: 'backdrop', on: { click: e => { if (e.target === bd) close(); } } }, sheet);
+  layer.append(bd); document.addEventListener('keydown', onKey);
+  build(sheet, close);
+  const f = sheet.querySelector('button, input, select, textarea'); if (f) f.focus();
+  return close;
+}
+const closeBtn = close => h('button', { class: 'iconbtn', 'aria-label': 'ปิด', on: { click: close } }, '×');
+
+/* ---------- header: next event ---------- */
+function renderNext(){
+  const box = $('#next'); box.textContent = '';
+  const t = todayISO();
+  const up = SESS.filter(s => effDate(s) >= t).sort((a, b) => effDate(a).localeCompare(effDate(b)))[0];
+  if (up){
+    const d = effDate(up), diff = dayDiff(d, t);
+    box.append(
+      h('div', { class: 'when' }, fmt(d, { wd: true })),
+      h('div', { class: 'count' }, diff === 0 ? 'วันนี้' : 'อีก ' + diff + ' วัน'),
+      h('div', { class: 'what' }, 'รอบ ' + up.label + ' ' + up.theme + '. เดิน 08.30 ถึง 10.00 น. วันสำรอง ' + fmt(effBackup(up), { wd: true })),
+      h('button', { on: { click: () => openRound(up) } }, 'ดูรายละเอียดรอบนี้')
+    );
+  } else {
+    box.append(h('div', { class: 'when' }, 'จบรอบ round แล้ว'), h('div', { class: 'what' }, 'ดูกำหนดเยี่ยมสำรวจ HA ประเมิน HAIT และการวางแผนต่อได้ในหน้าภาพรวม'));
+  }
+}
+
+/* ---------- ribbon ---------- */
+function renderRibbon(){
+  const nav = $('#ribbon'); nav.textContent = '';
+  const now = new Date();
+  MONTHS.forEach((mm, i) => {
+    const k = phaseOfMonth(mm.y, mm.m);
+    const chip = h('button', { class: 'chip' + (now.getFullYear() === mm.y && now.getMonth() + 1 === mm.m ? ' now' : ''), 'aria-pressed': String(i === ui.mi),
+      on: { click: () => { ui.mi = i; ui.tab = 'cal'; render(); } } }, TH_MS[mm.m], h('small', null, String(mm.y + 543).slice(2)), h('i', { class: 'k-' + k }));
+    nav.append(chip);
+  });
+  const active = nav.children[ui.mi]; if (active && active.scrollIntoView) { try { nav.scrollTo({ left: active.offsetLeft - 60 }); } catch (e) {} }
+}
+
+/* ---------- calendar ---------- */
+function dayInfo(d){
+  const info = { cls: [], lb: '', open: false, click: null };
+  const dow = parse(d).getDay();
+  if (dow === 0 || dow === 6) info.cls.push('wk');
+  if (HOL[d]) { info.cls.push('hol'); info.click = () => toast(fmt(d, { wd: true }) + ': ' + HOL[d]); }
+  if (S.dates.haitFrom && S.dates.haitTo && d >= S.dates.haitFrom && d <= S.dates.haitTo) { info.cls.push('hait'); info.click = () => openPhase('haitA'); }
+  const s = SESS.find(x => effDate(x) === d);
+  if (s){ info.cls = info.cls.filter(c => c !== 'hol' && c !== 'hait'); info.cls.push('round'); info.lb = 'รอบ ' + s.label; info.open = openFor(s.label) > 0; info.click = () => openRound(s); }
+  else {
+    const bk = SESS.find(x => effBackup(x) === d);
+    if (bk){ info.cls = info.cls.filter(c => c !== 'hol' && c !== 'hait'); info.cls.push('backup'); info.lb = 'สำรอง ' + bk.label; info.click = () => openRound(bk); }
+  }
+  if (S.dates.survey === d){ info.cls = info.cls.filter(c => c !== 'round'); info.cls.push('survey'); info.lb = 'เยี่ยม HA'; info.click = () => openPhase('survey'); }
+  if (S.dates.review === d){ info.cls.push('review'); info.lb = 'ทบทวน'; info.click = () => openPhase('review'); }
+  const aa = aftOn(d);
+  if (aa.length){
+    if (info.cls.some(c => c === 'round' || c === 'backup' || c === 'survey' || c === 'review')) info.am = true;
+    else { info.cls = info.cls.filter(c => c !== 'hol' && c !== 'hait'); info.cls.push('aft'); info.lb = 'บ่าย'; info.click = () => openAft(aa[0]); }
+  }
+  if (d === todayISO()) info.cls.push('today');
+  return info;
+}
+function renderCal(){
+  const root = $('#v-cal'); root.textContent = '';
+  const { y, m } = MONTHS[ui.mi]; const kind = phaseOfMonth(y, m);
+  root.append(h('div', { class: 'calhead' },
+    h('button', { class: 'iconbtn', 'aria-label': 'เดือนก่อน', disabled: ui.mi === 0, on: { click: () => { ui.mi--; render(); } } }, '‹'),
+    h('div', { style: 'text-align:center' }, h('h2', null, TH_M[m] + ' ' + (y + 543)), h('div', { class: 'phase' }, KIND_LABEL[kind])),
+    h('button', { class: 'iconbtn', 'aria-label': 'เดือนถัดไป', disabled: ui.mi === 11, on: { click: () => { ui.mi++; render(); } } }, '›')));
+  const grid = h('div', { class: 'grid' }); TH_DS.forEach(d => grid.append(h('div', { class: 'dow' }, d)));
+  const first = new Date(y, m - 1, 1), n = new Date(y, m, 0).getDate();
+  for (let i = 0; i < first.getDay(); i++) grid.append(h('div', { class: 'day empty' }));
+  for (let d = 1; d <= n; d++){
+    const ds = y + '-' + pad(m) + '-' + pad(d); const inf = dayInfo(ds);
+    const b = h('button', { class: 'day ' + inf.cls.join(' '), 'aria-label': fmt(ds, { wd: true, yr: true }) + (inf.lb ? ' ' + inf.lb : '') + (HOL[ds] ? ' ' + HOL[ds] : ''), on: { click: inf.click || (() => {}) } },
+      String(d), inf.lb ? h('span', { class: 'lb' }, inf.lb) : null, inf.open ? h('span', { class: 'dot', title: 'มีประเด็นค้าง' }) : null, inf.am ? h('span', { class: 'am', title: 'มีกิจกรรมช่วงบ่าย' }) : null);
+    grid.append(b);
+  }
+  root.append(grid);
+  root.append(h('div', { class: 'legend' },
+    h('span', { style: '--c:var(--round)' }, 'วัน round'), h('span', { style: '--c:var(--backup)' }, 'วันสำรอง'), h('span', { style: '--c:var(--aft-strong)' }, 'กิจกรรมช่วงบ่าย'), h('span', { style: '--c:var(--survey)' }, 'เยี่ยมสำรวจ HA'), h('span', { style: '--c:var(--hait-soft);' }, 'ช่วงประเมิน HAIT'),
+    h('span', { style: '--c:var(--review)' }, 'ทบทวนสิ้นปี'), h('span', { style: '--c:var(--alert-soft)' }, 'วันหยุด'),
+    h('span', { class: 'tk' }, 'ตัวอักษรดำ = HA'), h('span', { class: 'tk h' }, 'ตัวอักษรน้ำเงิน = HAIT')));
+  // agenda
+  const ag = h('div', { class: 'agenda' });
+  const key = y + '-' + pad(m);
+  SESS.filter(s => effDate(s).startsWith(key)).sort((a, b) => effDate(a).localeCompare(effDate(b))).forEach(s => {
+    const d = effDate(s); const op = openFor(s.label);
+    ag.append(h('button', { class: 'ev round', on: { click: () => openRound(s) } },
+      h('div', { class: 'd' }, String(parse(d).getDate()), h('small', null, TH_D[parse(d).getDay()])),
+      h('div', null, h('div', { class: 't' }, 'รอบ ' + s.label + ' ' + s.theme),
+        h('div', { class: 's' }, s.units.filter(u => !u.n.startsWith('[HAIT]')).map(u => u.n).join(' → ')),
+        h('div', { class: 's' }, h('span', { class: 'pill bk' }, 'วันสำรอง ' + fmt(effBackup(s), { wd: true }))),
+        op ? h('div', { class: 's' }, h('span', { class: 'pill hi' }, 'ประเด็นค้าง ' + op)) : null)));
+  });
+  AFT.filter(a => aftDate(a).startsWith(key)).forEach(a => {
+    const d = aftDate(a);
+    ag.append(h('button', { class: 'ev aft', on: { click: () => openAft(a) } },
+      h('div', { class: 'd' }, String(parse(d).getDate()), h('small', null, TH_D[parse(d).getDay()])),
+      h('div', null, h('div', { class: 't' }, 'บ่าย 13.00 ถึง 16.00 ' + a.t), h('div', { class: 's' }, h('span', { class: 'pill af' }, aftStat(a))))));
+  });
+  { const kids = [...ag.children]; kids.forEach((k, i) => { k._d = (k.querySelector('.d') ? 0 : 0); });
+    const dayOf = k => { const n = +((k.querySelector('.d') || {}).firstChild || {}).textContent || 0; return n; };
+    kids.sort((x, y) => dayOf(x) - dayOf(y)); ag.textContent = ''; kids.forEach(k => ag.append(k)); }
+  const pk = { survey: ['survey', 'เยี่ยมสำรวจ HA', 'survey'], hait: ['haitA', 'ประเมิน HAIT', 'hait'], review: ['review', 'ทบทวนสิ้นปีงบและวางแผนต่อ', 'review'] }[kind];
+  if (pk){
+    let sub = 'ยังไม่กำหนดวัน กดเพื่อใส่วันที่';
+    if (kind === 'survey' && S.dates.survey) sub = fmt(S.dates.survey, { wd: true, yr: true });
+    if (kind === 'hait' && S.dates.haitFrom) sub = fmt(S.dates.haitFrom) + (S.dates.haitTo ? ' ถึง ' + fmt(S.dates.haitTo) : '');
+    if (kind === 'review' && S.dates.review) sub = fmt(S.dates.review, { wd: true, yr: true });
+    ag.append(h('button', { class: 'ev ' + pk[2], on: { click: () => openPhase(pk[0]) } }, h('div', { class: 'd' }, TH_MS[m]), h('div', null, h('div', { class: 't' }, pk[1]), h('div', { class: 's' }, sub))));
+  }
+  if (!ag.children.length) ag.append(h('div', { class: 'empty-note' }, 'ไม่มีรายการในเดือนนี้'));
+  root.append(ag);
+}
+
+/* ---------- round detail ---------- */
+function openRound(s){
+  openSheet((sheet, close) => {
+    const d = effDate(s), dow = parse(d).getDay();
+    const issuesCount = S.issues.filter(i => i.round === s.label).length;
+    const dateIn = h('input', { type: 'date', value: d, 'aria-label': 'วัน round' });
+    const bkIn = h('input', { type: 'date', value: effBackup(s), 'aria-label': 'วันสำรอง' });
+    const warn = h('div'), warnB = h('div');
+    const checkOn = (box, v) => {
+      box.textContent = ''; if (!v) return;
+      const w = parse(v).getDay();
+      if (HOL[v]) box.append(h('div', { class: 'warnbox' }, 'ตรงวันหยุด: ' + HOL[v]));
+      else if (w === 0 || w === 6) box.append(h('div', { class: 'warnbox' }, 'ตรงเสาร์หรืออาทิตย์'));
+    };
+    const check = v => checkOn(warn, v);
+    check(d); checkOn(warnB, effBackup(s));
+    sheet.append(
+      h('div', { class: 'hd' }, h('div', null, h('span', { class: 'pill' }, 'รอบ ' + s.label), h('h2', null, fmt(d, { wd: true, long: true, yr: true })), h('div', { class: 'muted small' }, '08.30 ถึง 10.00 น. ' + s.theme)), closeBtn(close)),
+      h('div', { class: 'card' }, h('label', { style: 'margin-top:0' }, 'เปลี่ยนวัน round'),
+        h('div', { class: 'row' }, dateIn,
+          ro() ? null : h('button', { class: 'btn sm', on: { click: async () => { if (!dateIn.value) return; if (await setDates({ round: { [s.label]: dateIn.value } })) { toast('เปลี่ยนวัน รอบ ' + s.label + ' แล้ว'); close(); render(); } } } }, 'บันทึกวัน'),
+          !ro() && S.dates.round[s.label] ? h('button', { class: 'btn ghost sm', on: { click: async () => { if (await setDates({ round: { [s.label]: '' } })) { toast('ใช้วันตั้งต้นแล้ว'); close(); render(); } } } }, 'ใช้วันตั้งต้น') : null),
+        warn,
+        h('label', null, 'วันสำรอง (ใช้เมื่อวัน round ติดภารกิจ)'),
+        h('div', { class: 'row' }, bkIn, ro() ? null : h('button', { class: 'btn sm', on: { click: async () => { if (!bkIn.value) return; if (await setDates({ backup: { [s.label]: bkIn.value } })) { toast('บันทึกวันสำรอง รอบ ' + s.label + ' แล้ว'); close(); render(); } } } }, 'บันทึกวันสำรอง')),
+        warnB));
+    dateIn.addEventListener('input', () => check(dateIn.value));
+    bkIn.addEventListener('input', () => checkOn(warnB, bkIn.value));
+    const inWin = s.units, sl = slots(inWin);
+    sheet.append(h('div', { class: 'step' }, h('div', { class: 'tm' }, '08.30 ถึง 08.35'), h('div', null, h('div', { class: 'nm' }, 'เปิด round'), h('div', { class: 'pt' }, 'แบ่งทีม ทบทวนประเด็นหลักของรอบ'))));
+    inWin.forEach((u, i) => {
+      const nm = cleanUnit(u.n); const c = openFor(s.label, nm);
+      sheet.append(h('div', { class: 'step' + (u.n.startsWith('[HAIT]') ? ' hait' : '') },
+        h('div', { class: 'tm' }, hm(sl[i][0]) + ' ถึง ' + hm(sl[i][1])),
+        h('div', null, h('div', { class: 'nm' }, nm), h('div', { class: 'pt' }, u.pts), h('div', { class: 'pp' }, 'ผู้เข้าร่วม: ' + u.ppl),
+          h('div', { class: 'row', style: 'margin-top:6px' },
+            ro() ? null : h('button', { class: 'btn sm', on: { click: () => { close(); openIssue({ round: s.label, unit: nm, found: d <= todayISO() ? d : todayISO() }); } } }, '+ บันทึกประเด็น'),
+            c ? h('span', { class: 'pill hi' }, 'ค้าง ' + c) : null))));
+    });
+    sheet.append(h('div', { class: 'step' }, h('div', { class: 'tm' }, '09.50 ถึง 10.00'), h('div', null, h('div', { class: 'nm' }, 'สรุปผล'), h('div', { class: 'pt' }, 'บันทึก gap และ feedback สดต่อหัวหน้าหน่วย'))));
+    const aftHere = aftOn(d).concat(aftOn(effBackup(s)).filter(a => aftDate(a) !== d));
+    aftHere.forEach(a => sheet.append(h('div', { class: 'card', style: 'margin-top:10px;border-left:5px solid var(--aft-strong)' },
+      h('h3', null, 'ช่วงบ่าย 13.00 ถึง 16.00' + (aftDate(a) !== d ? ' (ถ้าใช้วันสำรอง)' : '')), h('div', null, a.t),
+      h('div', { class: 'row', style: 'margin-top:8px' }, h('span', { class: 'pill af' }, aftStat(a)), h('button', { class: 'btn ghost sm', on: { click: () => { close(); openAft(a); } } }, 'ดูกิจกรรมนี้')))));
+    if (s.hait){
+      const nm = cleanUnit(s.hait.n);
+      sheet.append(h('div', { class: 'card ht', style: 'margin-top:10px;border-left:5px solid var(--hait)' },
+        h('h3', null, 'ช่วงบ่าย ' + nm), h('div', { class: 'small muted' }, 'นอกเวลา round ประชุมแยก (เสนอ 13.00 ถึง 14.30 น. ปรับได้)'),
+        h('div', { class: 'small', style: 'margin-top:6px' }, s.hait.pts), h('div', { class: 'small muted', style: 'margin-top:4px' }, 'ผู้เข้าร่วม: ' + s.hait.ppl),
+        h('div', { class: 'row', style: 'margin-top:8px' }, ro() ? null : h('button', { class: 'btn sm', on: { click: () => { close(); openIssue({ round: s.label, unit: nm, found: todayISO() }); } } }, '+ บันทึกประเด็น'))));
+    }
+    sheet.append(
+      h('details', null, h('summary', null, 'หัวข้อมาตรฐานที่ตรวจ'), h('ul', null, s.std.map(l => h('li', null, l)), (s.stdH ? s.stdH.split(' | ') : []).map(l => h('li', { class: 'ht' }, l)))),
+      h('details', null, h('summary', null, 'คณะกรรมการ/ทีมที่รับผิดชอบ'), h('div', { class: 'small', style: 'margin-top:6px;color:var(--txt)' }, segs(s.comm + (s.commH ? ' + ' + s.commH : '')))),
+      h('div', { class: 'row', style: 'margin-top:10px' }, h('button', { class: 'btn ghost', on: { click: () => { close(); ui.tab = 'iss'; ui.f = { st: 'all', round: s.label, risk: '' }; render(); } } }, 'ประเด็นของรอบนี้ (' + issuesCount + ')')));
+  });
+}
+
+/* ---------- afternoon activity sheet ---------- */
+function openAft(a){
+  openSheet((sheet, close) => {
+    const d = aftDate(a); const dIn = h('input', { type: 'date', value: d }); const warn = h('div');
+    const chk = v => { warn.textContent = ''; if (!v) return; const w = parse(v).getDay(); if (HOL[v]) warn.append(h('div', { class: 'warnbox' }, 'ตรงวันหยุด: ' + HOL[v])); else if (w === 0 || w === 6) warn.append(h('div', { class: 'warnbox' }, 'ตรงเสาร์หรืออาทิตย์')); };
+    chk(d); dIn.addEventListener('input', () => chk(dIn.value));
+    const stSel = h('select', null, AFT_STATS.map(s => h('option', { selected: aftStat(a) === s }, s)));
+    const sameDay = SESS.filter(s => effDate(s) === d || effBackup(s) === d);
+    sheet.append(
+      h('div', { class: 'hd' }, h('div', null, h('span', { class: 'pill af' }, 'บ่าย 13.00 ถึง 16.00'), h('h2', null, a.t), h('div', { class: 'muted small' }, fmt(d, { wd: true, long: true, yr: true }) + ' งาน HA')), closeBtn(close)),
+      sameDay.length ? h('div', { class: 'okbox' }, 'วันเดียวกับ round เช้า: ' + sameDay.map(s => 'รอบ ' + s.label + (effDate(s) === d ? '' : ' (วันสำรอง)')).join(', ') + ' ไม่ชนเวลา') : null,
+      h('div', { class: 'card' },
+        h('label', { style: 'margin-top:0' }, 'สถานะ'), stSel,
+        ro() ? null : h('div', { class: 'row', style: 'margin-top:8px' }, h('button', { class: 'btn sm', on: { click: async () => { if (await setDates({ aftStatus: { [a.k]: stSel.value } })) { toast('บันทึกสถานะแล้ว'); close(); render(); } } } }, 'บันทึกสถานะ')),
+        h('label', null, 'เปลี่ยนวัน'), dIn,
+        ro() ? null : h('div', { class: 'row', style: 'margin-top:8px' },
+          h('button', { class: 'btn sm', on: { click: async () => { if (!dIn.value) return; if (await setDates({ aft: { [a.k]: dIn.value } })) { toast('เปลี่ยนวันแล้ว'); close(); render(); } } } }, 'บันทึกวัน'),
+          S.dates.aft && S.dates.aft[a.k] ? h('button', { class: 'btn ghost sm', on: { click: async () => { if (await setDates({ aft: { [a.k]: '' } })) { toast('ใช้วันตั้งต้นแล้ว'); close(); render(); } } } }, 'ใช้วันตั้งต้น') : null),
+        warn));
+  });
+}
+
+/* ---------- phase sheet (survey / HAIT / review) ---------- */
+function openPhase(key){
+  const ph = key === 'survey' ? PHASE.survey : key === 'review' ? PHASE.review : PHASE.haitA;
+  openSheet((sheet, close) => {
+    const kind = key === 'survey' ? 'survey' : key === 'review' ? 'review' : 'hait';
+    sheet.append(h('div', { class: 'hd' }, h('div', { class: kind === 'hait' ? 'ht' : '' }, h('span', { class: 'pill ' + (kind === 'hait' ? 'mid' : kind) }, ph.month), h('h2', null, ph.theme)), closeBtn(close)));
+    const dates = h('div', { class: 'card' });
+    if (key === 'survey'){
+      const i = h('input', { type: 'date', value: S.dates.survey || '' });
+      dates.append(h('label', { style: 'margin-top:0' }, 'วันเยี่ยมสำรวจ HA'), i,
+        h('div', { class: 'row', style: 'margin-top:8px' }, ro() ? null : h('button', { class: 'btn sm', on: { click: async () => { if (await setDates({ survey: i.value })) { toast('บันทึกวันเยี่ยมสำรวจแล้ว'); close(); render(); } } } }, 'บันทึกวัน'),
+          S.dates.survey ? h('span', { class: 'small muted' }, 'อีก ' + dayDiff(S.dates.survey, todayISO()) + ' วัน') : null));
+    } else if (key === 'review'){
+      const i = h('input', { type: 'date', value: S.dates.review || '' });
+      dates.append(h('label', { style: 'margin-top:0' }, 'วันประชุมทบทวนสิ้นปีงบและวางแผนต่อ'), i,
+        h('div', { class: 'row', style: 'margin-top:8px' }, ro() ? null : h('button', { class: 'btn sm', on: { click: async () => { if (await setDates({ review: i.value })) { toast('บันทึกวันประชุมแล้ว'); close(); render(); } } } }, 'บันทึกวัน')));
+    } else {
+      const a = h('input', { type: 'date', value: S.dates.haitFrom || '' }), b = h('input', { type: 'date', value: S.dates.haitTo || '' });
+      dates.append(h('div', { class: 'two' }, h('div', null, h('label', { style: 'margin-top:0' }, 'เริ่มประเมิน HAIT'), a), h('div', null, h('label', { style: 'margin-top:0' }, 'สิ้นสุด'), b)),
+        h('div', { class: 'row', style: 'margin-top:8px' }, ro() ? null : h('button', { class: 'btn sm', on: { click: async () => { if (await setDates({ haitFrom: a.value, haitTo: b.value })) { toast('บันทึกช่วงประเมิน HAIT แล้ว'); close(); render(); } } } }, 'บันทึกช่วง')));
+    }
+    sheet.append(dates);
+    const units = kind === 'hait' ? [] : ph.units;
+    if (kind === 'hait') ['haitA', 'haitB', 'haitC'].forEach(k => { const p = PHASE[k]; sheet.append(h('details', { open: k === 'haitA' }, h('summary', null, p.month + ' ' + p.theme), p.units.map(u => h('div', { class: 'step' + (u.n.startsWith('[HAIT]') ? ' hait' : ''), style: 'grid-template-columns:1fr' }, h('div', { class: 'nm' }, cleanUnit(u.n).replace(/^\[HA\]\s*/, 'HA: ')), h('div', { class: 'pt' }, u.pts), h('div', { class: 'pp' }, 'ผู้เข้าร่วม: ' + u.ppl))))); });
+    units.forEach(u => sheet.append(h('div', { class: 'card' + (u.n.startsWith('[HAIT]') ? ' ht' : '') }, h('h3', null, cleanUnit(u.n).replace(/^\[HA\]\s*/, 'HA: ')), h('div', { class: 'small' }, u.pts), h('div', { class: 'small muted', style: 'margin-top:4px' }, 'ผู้เข้าร่วม: ' + u.ppl))));
+    sheet.append(h('details', null, h('summary', null, 'คณะกรรมการ/ทีมที่รับผิดชอบ'), h('div', { class: 'small', style: 'margin-top:6px;color:var(--txt)' }, segs(ph.comm))));
+  });
+}
+
+/* ---------- issues ---------- */
+const TYPES = ['Gap ต้องแก้ไข', 'ต้องติดตามเพิ่ม', 'ข้อสังเกต', 'จุดเด่น/แนวปฏิบัติที่ดี'];
+const RISKS = ['สูง', 'กลาง', 'ต่ำ'];
+const STATS = ['เปิด', 'กำลังดำเนินการ', 'รอตรวจซ้ำ', 'ปิดแล้ว'];
+const ROUND_LABELS = SESS.map(s => s.label);
+const UNIT_NAMES = (() => { const set = new Set(); SESS.forEach(s => { s.units.forEach(u => set.add(cleanUnit(u.n))); if (s.hait) set.add(cleanUnit(s.hait.n)); }); return [...set]; })();
+function openIssue(pre){
+  const editing = pre && pre.id ? S.issues.find(i => i.id === pre.id) : null;
+  const v = Object.assign({ found: todayISO(), round: '', unit: '', std: '', text: '', type: TYPES[0], risk: 'กลาง', owner: '', due: '', status: 'เปิด', recheck: '', evidence: '', note: '' }, editing || pre || {});
+  openSheet((sheet, close) => {
+    const f = {};
+    const field = (label, el) => h('div', null, h('label', null, label), el);
+    f.found = h('input', { type: 'date', value: v.found });
+    f.round = h('select', null, h('option', { value: '' }, 'นอกรอบ'), ROUND_LABELS.map(l => h('option', { value: l, selected: v.round === l }, 'รอบ ' + l)));
+    f.unit = h('input', { type: 'text', list: 'unitlist', value: v.unit, placeholder: 'เลือกหรือพิมพ์เอง' });
+    f.std = h('input', { type: 'text', value: v.std, placeholder: 'เช่น II-6 หรือ HAIT หมวด 3' });
+    f.text = h('textarea', { placeholder: 'ตรวจเจออะไร ต้องติดตามอะไร' }, v.text);
+    f.type = h('select', null, TYPES.map(t => h('option', { selected: v.type === t }, t)));
+    f.risk = h('select', null, RISKS.map(t => h('option', { selected: v.risk === t }, t)));
+    f.owner = h('input', { type: 'text', value: v.owner, placeholder: 'ชื่อหรือหน่วยที่รับผิดชอบ' });
+    f.due = h('input', { type: 'date', value: v.due });
+    f.status = h('select', null, STATS.map(t => h('option', { selected: v.status === t }, t)));
+    f.recheck = h('select', null, h('option', { value: '' }, 'ยังไม่กำหนด'), ROUND_LABELS.map(l => h('option', { value: l, selected: v.recheck === l }, 'รอบ ' + l)));
+    f.evidence = h('input', { type: 'text', value: v.evidence, placeholder: 'ลิงก์รูปหรือเลขที่เอกสาร' });
+    f.note = h('input', { type: 'text', value: v.note });
+    f.by = shared.provider === 'sheet' && !shared.uid ? h('input', { type: 'text', placeholder: 'ชื่อของคุณ (ถามครั้งเดียว)' }) : null;
+    f.work = h('select', null, ['HA', 'HAIT'].map(w => h('option', { selected: workOf(v) === w }, w)));
+    let workTouched = !!(editing && editing.work);
+    f.work.addEventListener('change', () => { workTouched = true; });
+    const guess = () => { if (!workTouched) f.work.value = workOf({ unit: f.unit.value, std: f.std.value }); };
+    f.unit.addEventListener('input', guess); f.std.addEventListener('input', guess);
+    const err = h('div');
+    let delArmed = false;
+    const delBtn = editing ? h('button', { class: 'btn ghost', on: { click: async () => {
+      if (!delArmed){ delArmed = true; delBtn.textContent = 'กดอีกครั้งเพื่อลบ'; delBtn.className = 'btn warn'; return; }
+      if (await removeIssue(editing.id)) { toast('ลบประเด็นแล้ว'); close(); render(); }
+    } } }, 'ลบประเด็น') : null;
+    sheet.append(
+      h('div', { class: 'hd' }, h('h2', null, editing ? 'แก้ไขประเด็น ' + labelOf(editing) : 'บันทึกประเด็นใหม่'), closeBtn(close)),
+      h('datalist', { id: 'unitlist' }, UNIT_NAMES.map(n => h('option', { value: n }))),
+      field('ประเด็นที่ตรวจเจอ หรือต้องติดตาม', f.text), err,
+      f.by ? field('ชื่อผู้บันทึก (แสดงที่การ์ดประเด็น)', f.by) : null,
+      h('div', { class: 'two' }, field('วันที่พบ', f.found), field('รอบ', f.round)),
+      h('div', { class: 'two' }, field('หน่วยงาน', f.unit), field('หัวข้อมาตรฐาน/บท', f.std)),
+      h('div', { class: 'two' }, field('ประเภท', f.type), field('ความเสี่ยงต่อความปลอดภัย', f.risk)),
+      h('div', { class: 'two' }, field('ผู้รับผิดชอบแก้ไข', f.owner), field('กำหนดเสร็จ', f.due)),
+      h('div', { class: 'two' }, field('สถานะ', f.status), field('งาน (HA ตัวอักษรดำ / HAIT ตัวอักษรน้ำเงิน)', f.work)),
+      h('div', { class: 'two' }, field('ตรวจซ้ำรอบ', f.recheck), field('หลักฐาน', f.evidence)),
+      field('หมายเหตุ', f.note),
+      h('div', { class: 'row', style: 'margin-top:16px' },
+        h('button', { class: 'btn', on: { click: async () => {
+          if (!f.text.value.trim()){ err.textContent = ''; err.append(h('div', { class: 'warnbox' }, 'พิมพ์ประเด็นก่อนบันทึก')); f.text.focus(); return; }
+          if (f.by){ const nm = f.by.value.trim(); if (!nm){ err.textContent = ''; err.append(h('div', { class: 'warnbox' }, 'ใส่ชื่อผู้บันทึกก่อน')); f.by.focus(); return; } shared.uid = nm; if (remote.cfg){ remote.cfg.name = nm; store.set('ha.remote', remote.cfg); } }
+          const rec = { id: editing ? editing.id : newId(), no: editing ? numOf(editing) : nextNo(), by: editing ? (editing.by || '') : shared.uid, createdAt: editing ? (editing.createdAt || nowISO()) : nowISO(), found: f.found.value || todayISO(), round: f.round.value, unit: f.unit.value.trim(), std: f.std.value.trim(), text: f.text.value.trim(),
+            type: f.type.value, work: f.work.value, risk: f.risk.value, owner: f.owner.value.trim(), due: f.due.value, status: f.status.value, recheck: f.recheck.value, evidence: f.evidence.value.trim(), note: f.note.value.trim(),
+            closedOn: f.status.value === 'ปิดแล้ว' ? ((editing && editing.closedOn) || todayISO()) : '' };
+          if (editing){
+            const diff = {}; Object.keys(rec).forEach(k => { if (k !== 'id' && k !== 'no' && k !== 'by' && k !== 'createdAt' && String(rec[k] == null ? '' : rec[k]) !== String(editing[k] == null ? '' : editing[k])) diff[k] = rec[k]; });
+            if (!Object.keys(diff).length){ toast('ไม่มีการเปลี่ยนแปลง'); close(); return; }
+            if (await patchIssue(editing.id, diff)) { toast('บันทึกการแก้ไขแล้ว'); close(); render(); }
+          } else if (await putIssue(rec)) { toast('บันทึกประเด็นแล้ว'); close(); render(); }
+        } } }, editing ? 'บันทึกการแก้ไข' : 'บันทึกประเด็น'),
+        h('button', { class: 'btn ghost', on: { click: close } }, 'ยกเลิก'), delBtn));
+  });
+}
+
+function renderIssues(){
+  const root = $('#v-iss'); root.textContent = '';
+  const F = ui.f;
+  const chip = (lbl, on, fn) => h('button', { class: 'fchip', 'aria-pressed': String(on), on: { click: fn } }, lbl);
+  root.append(h('div', { class: 'chips' },
+    chip('ยังไม่ปิด', F.st === 'open', () => { F.st = 'open'; render(); }), chip('เกินกำหนด', F.st === 'over', () => { F.st = 'over'; render(); }),
+    chip('ปิดแล้ว', F.st === 'closed', () => { F.st = 'closed'; render(); }), chip('ทั้งหมด', F.st === 'all', () => { F.st = 'all'; render(); })));
+  root.append(h('div', { class: 'chips' },
+    chip('ทุกงาน', !F.work, () => { F.work = ''; render(); }), chip('HA', F.work === 'HA', () => { F.work = 'HA'; render(); }), chip('HAIT', F.work === 'HAIT', () => { F.work = 'HAIT'; render(); })));
+  const sel = h('select', { 'aria-label': 'กรองตามรอบ', on: { change: e => { F.round = e.target.value; render(); } } }, h('option', { value: '' }, 'ทุกรอบ'), ROUND_LABELS.map(l => h('option', { value: l, selected: F.round === l }, 'รอบ ' + l)));
+  const sel2 = h('select', { 'aria-label': 'กรองตามความเสี่ยง', on: { change: e => { F.risk = e.target.value; render(); } } }, h('option', { value: '' }, 'ทุกระดับความเสี่ยง'), RISKS.map(l => h('option', { value: l, selected: F.risk === l }, 'เสี่ยง' + l)));
+  root.append(h('div', { class: 'two', style: 'margin-bottom:12px' }, sel, sel2));
+  let list = S.issues.filter(i => (F.st === 'all') || (F.st === 'open' && isOpen(i)) || (F.st === 'closed' && !isOpen(i)) || (F.st === 'over' && isOver(i)));
+  if (F.round) list = list.filter(i => i.round === F.round);
+  if (F.risk) list = list.filter(i => i.risk === F.risk);
+  if (F.work) list = list.filter(i => workOf(i) === F.work);
+  const rank = { 'สูง': 0, 'กลาง': 1, 'ต่ำ': 2 };
+  list.sort((a, b) => (isOpen(b) - isOpen(a)) || ((rank[a.risk] ?? 3) - (rank[b.risk] ?? 3)) || (a.due || '9').localeCompare(b.due || '9'));
+  if (!list.length){
+    root.append(h('div', { class: 'empty-note' }, S.issues.length ? 'ไม่มีประเด็นตามตัวกรองนี้' : 'ยังไม่มีประเด็น กด "+ บันทึกประเด็น" หรือกดจากรายละเอียดของรอบเพื่อบันทึกตามหน่วยงาน'));
+    return;
+  }
+  list.forEach(i => {
+    const over = isOver(i);
+    root.append(h('div', { class: 'card issue ' + (i.risk === 'สูง' ? 'hi' : i.risk === 'กลาง' ? 'mid' : 'low') + (isOpen(i) ? '' : ' closed') + (workOf(i) === 'HAIT' ? ' work-hait' : '') },
+      h('div', { class: 'row' }, h('b', null, labelOf(i)), h('span', { class: 'pill tg' + (workOf(i) === 'HAIT' ? ' h' : '') }, workOf(i)), i.round ? h('span', { class: 'pill' }, 'รอบ ' + i.round) : null, h('span', { class: 'pill ' + (i.risk === 'สูง' ? 'hi' : i.risk === 'กลาง' ? 'mid' : '') }, 'เสี่ยง' + i.risk),
+        over ? h('span', { class: 'pill hi' }, 'เกินกำหนด') : null, !isOpen(i) ? h('span', { class: 'pill done' }, 'ปิดแล้ว') : null),
+      h('div', { class: 'small muted' }, [i.unit, i.std, i.type].filter(Boolean).join('  |  ')),
+      h('div', { class: 'tx' }, i.text),
+      h('div', { class: 'small muted' }, (shared.on && i.by ? 'บันทึกโดย ' + nameOf(i.by) + '  ' : '') + 'พบ ' + fmt(i.found, { yr: true }) + (i.owner ? '  รับผิดชอบ ' + i.owner : '') + (i.due ? '  กำหนด ' + fmt(i.due, { yr: true }) : '') + (isOpen(i) ? '  สถานะ ' + i.status : '')),
+      ro() ? null : h('div', { class: 'row', style: 'margin-top:4px' },
+        h('button', { class: 'btn ghost sm', on: { click: () => openIssue({ id: i.id }) } }, 'แก้ไข'),
+        isOpen(i) ? h('button', { class: 'btn sm', on: { click: async () => { if (await patchIssue(i.id, { status: 'ปิดแล้ว', closedOn: todayISO() })) toast('ปิดประเด็น ' + labelOf(i) + ' แล้ว'); } } }, 'ปิดประเด็น')
+                  : h('button', { class: 'btn ghost sm', on: { click: async () => { if (await patchIssue(i.id, { status: 'เปิด', closedOn: '' })) toast('เปิดประเด็น ' + labelOf(i) + ' ใหม่'); } } }, 'เปิดใหม่'))));
+  });
+  loadNames(list.map(i => i.by));
+}
+
+/* ---------- overview ---------- */
+async function saveFile(name, text, mime){
+  try {
+    const dl = (window.claude && window.claude.use) ? await window.claude.use('downloads') : null;
+    if (dl){ await dl.save({ filename: name, data: new Blob([text], { type: mime }) }); return; }
+  } catch (e) { if (e && e.code === 'declined') return; }
+  const a = h('a', { href: URL.createObjectURL(new Blob([text], { type: mime })), download: name }); document.body.append(a); a.click(); a.remove();
+}
+function csvEsc(v){ v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+function exportCSV(){
+  const head = ['เลขที่','บันทึกโดย','งาน','วันที่พบ','รอบ','หน่วยงาน','หัวข้อมาตรฐาน','ประเด็น','ประเภท','ความเสี่ยง','ผู้รับผิดชอบ','กำหนดเสร็จ','สถานะ','วันที่ปิด','ตรวจซ้ำรอบ','หลักฐาน','หมายเหตุ'];
+  const rows = S.issues.slice().sort((a, b) => numOf(a) - numOf(b)).map(i => [labelOf(i), nameOf(i.by), workOf(i), i.found, i.round, i.unit, i.std, i.text, i.type, i.risk, i.owner, i.due, i.status, i.closedOn, i.recheck, i.evidence, i.note]);
+  return '\uFEFF' + [head].concat(rows).map(r => r.map(csvEsc).join(',')).join('\r\n');
+}
+function renderOver(){
+  const root = $('#v-over'); root.textContent = '';
+  const open = S.issues.filter(isOpen), over = S.issues.filter(isOver), hi = open.filter(i => i.risk === 'สูง'), done = S.issues.filter(i => !isOpen(i));
+  root.append(h('div', { class: 'stat' }, h('div', null, h('b', null, open.length), h('span', null, 'ยังไม่ปิด')), h('div', { class: 'a' }, h('b', null, over.length), h('span', null, 'เกินกำหนด')),
+    h('div', { class: 'a' }, h('b', null, hi.length), h('span', null, 'เสี่ยงสูง')), h('div', null, h('b', null, done.length), h('span', null, 'ปิดแล้ว'))));
+  // timeline
+  const t = todayISO(); const items = [];
+  SESS.forEach(s => items.push({ d: effDate(s), k: 'round', t: 'รอบ ' + s.label, s: s.theme, open: () => openRound(s) }));
+  items.sort((a, b) => a.d.localeCompare(b.d));
+  const tl = h('div', { class: 'tl' });
+  const nextRound = items.find(x => x.d >= t);
+  if (nextRound) tl.append(h('div', { class: 'item' }, h('div', { class: 'sw k-round' }), h('div', null, h('b', null, 'รอบ round ถัดไป: ' + nextRound.t), h('span', { class: 'small muted' }, fmt(nextRound.d, { wd: true, yr: true }))), h('button', { class: 'btn ghost sm', on: { click: nextRound.open } }, 'ดู')));
+  const nextAft = AFT.filter(a => aftDate(a) >= t && aftStat(a) !== 'เสร็จแล้ว').sort((x, y) => aftDate(x).localeCompare(aftDate(y)))[0];
+  if (nextAft) tl.append(h('div', { class: 'item' }, h('div', { class: 'sw k-aft' }), h('div', null, h('b', null, 'กิจกรรมบ่ายถัดไป: ' + nextAft.t), h('span', { class: 'small muted' }, fmt(aftDate(nextAft), { wd: true, yr: true }) + ' 13.00 ถึง 16.00')), h('button', { class: 'btn ghost sm', on: { click: () => openAft(nextAft) } }, 'ดู')));
+  const last = items[items.length - 1];
+  tl.append(h('div', { class: 'item' }, h('div', { class: 'sw k-round' }), h('div', null, h('b', null, 'รอบสุดท้าย (ซ้อมรับตรวจ): ' + last.t), h('span', { class: 'small muted' }, fmt(last.d, { wd: true, yr: true }))), h('button', { class: 'btn ghost sm', on: { click: last.open } }, 'ดู')));
+  tl.append(h('div', { class: 'item' }, h('div', { class: 'sw k-survey' }), h('div', null, h('b', null, 'เยี่ยมสำรวจ HA (พ.ค. 2570)'), h('span', { class: 'small muted' }, S.dates.survey ? fmt(S.dates.survey, { wd: true, yr: true }) + ' อีก ' + dayDiff(S.dates.survey, t) + ' วัน' : 'ยังไม่กำหนดวัน')), h('button', { class: 'btn ghost sm', on: { click: () => openPhase('survey') } }, 'ตั้งวัน')));
+  tl.append(h('div', { class: 'item ht' }, h('div', { class: 'sw k-hait' }), h('div', null, h('b', null, 'ประเมิน HAIT (มิ.ย. ถึง ส.ค. 2570)'), h('span', { class: 'small muted' }, S.dates.haitFrom ? fmt(S.dates.haitFrom, { yr: true }) + (S.dates.haitTo ? ' ถึง ' + fmt(S.dates.haitTo, { yr: true }) : '') : 'ยังไม่กำหนดวัน')), h('button', { class: 'btn ghost sm', on: { click: () => openPhase('haitA') } }, 'ตั้งวัน')));
+  tl.append(h('div', { class: 'item' }, h('div', { class: 'sw k-review' }), h('div', null, h('b', null, 'ทบทวนสิ้นปีงบและวางแผนต่อ'), h('span', { class: 'small muted' }, S.dates.review ? fmt(S.dates.review, { wd: true, yr: true }) : 'ยังไม่กำหนดวัน')), h('button', { class: 'btn ghost sm', on: { click: () => openPhase('review') } }, 'ดู')));
+  root.append(h('div', { class: 'card' }, h('h3', null, 'กำหนดการสำคัญ'), tl));
+  // per-round table
+  const tb = h('table', null, h('thead', null, h('tr', null, h('th', null, 'รอบ'), h('th', null, 'พบ'), h('th', null, 'ค้าง'), h('th', null, 'ปิด'), h('th', null, 'เกิน'))));
+  const body = h('tbody');
+  ROUND_LABELS.concat(['']).forEach(l => {
+    const all = S.issues.filter(i => i.round === l);
+    body.append(h('tr', { 'data-r': l, tabindex: '0', on: { click: () => { ui.tab = 'iss'; ui.f = { st: 'all', round: l, risk: '' }; render(); } } },
+      h('td', null, l ? 'รอบ ' + l : 'นอกรอบ'), h('td', null, all.length), h('td', null, all.filter(isOpen).length), h('td', null, all.filter(i => !isOpen(i)).length), h('td', null, all.filter(isOver).length)));
+  });
+  tb.append(body);
+  root.append(h('div', { class: 'card' }, h('h3', null, 'ประเด็นรายรอบ'), tb));
+  // data
+  const fileIn = h('input', { type: 'file', accept: 'application/json,.json', hidden: true, on: { change: async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const j = JSON.parse(await f.text());
+      if (!j || !Array.isArray(j.issues)) throw new Error('bad');
+      if (shared.on){
+        let n = 0; for (const it of j.issues){ const rec = Object.assign({}, it, { id: newId(), no: nextNo() + n, by: shared.uid, createdAt: it.createdAt || nowISO() }); if (await putIssue(rec)) n++; }
+        toast('นำเข้าขึ้นส่วนกลาง ' + n + ' ประเด็น');
+      } else {
+        S.issues = j.issues; if (j.dates) S.dates = Object.assign(DEF_DATES(), j.dates);
+        S.haitCat = j.haitCat || {}; S.plus = j.plus || {}; save(); toast('นำเข้าข้อมูลแล้ว ' + S.issues.length + ' ประเด็น'); render();
+      }
+    } catch (err) { toast('ไฟล์นี้ไม่ใช่ไฟล์สำรองของแอปนี้'); }
+    e.target.value = '';
+  } } });
+  let clr = false; const clrBtn = h('button', { class: 'btn ghost', on: { click: () => {
+    if (!clr){ clr = true; clrBtn.textContent = 'กดอีกครั้งเพื่อล้างทั้งหมด'; clrBtn.className = 'btn warn'; return; }
+    S.issues = []; S.dates = DEF_DATES(); S.haitCat = {}; S.plus = {}; save(); toast('ล้างข้อมูลแล้ว'); render();
+  } } }, 'ล้างข้อมูลทั้งหมด');
+  const localN = shared.on && shared.local ? shared.local.issues.length : 0;
+  const cfgUrl = h('input', { type: 'text', value: (remote.cfg && remote.cfg.url) || '', placeholder: 'https://script.google.com/macros/s/.../exec' });
+  const cfgKey = h('input', { type: 'text', value: (remote.cfg && remote.cfg.key) || '', placeholder: 'รหัสผ่านทีม' });
+  const cfgName = h('input', { type: 'text', value: (remote.cfg && remote.cfg.name) || shared.uid || '', placeholder: 'ชื่อของคุณ' });
+  const linkOut = h('input', { type: 'text', readonly: true, 'aria-label': 'ลิงก์ตั้งค่าสำหรับทีม' });
+  root.append(h('div', { class: 'card' }, h('h3', null, 'เชื่อมต่อทีม (Google Sheets)'),
+    h('p', { class: 'small muted', style: 'margin:0 0 4px' }, remote.cfg ? (remote.ok ? 'เชื่อมต่อแล้ว ประเด็นซิงก์กับทุกคนที่ตั้งค่าเดียวกัน (เห็นการเปลี่ยนแปลงของคนอื่นภายในไม่กี่วินาที)' : 'ยังเชื่อมต่อไม่ได้: ' + (ERR_TXT[remote.err] || 'ตรวจลิงก์ รหัสผ่าน และอินเทอร์เน็ต')) : 'ใส่ลิงก์ Apps Script และรหัสผ่านทีม เพื่อให้ทุกคนเห็นประเด็นชุดเดียวกัน'),
+    h('label', null, 'ลิงก์ Apps Script (ลงท้าย /exec)'), cfgUrl, h('label', null, 'รหัสผ่านทีม'), cfgKey, h('label', null, 'ชื่อผู้บันทึก'), cfgName,
+    h('div', { class: 'row', style: 'margin-top:10px' },
+      h('button', { class: 'btn', on: { click: async () => {
+        const u = cfgUrl.value.trim(); if (!/^https:\/\//.test(u)) { toast('ลิงก์ต้องขึ้นต้นด้วย https://'); return; }
+        remote.cfg = { url: u, key: cfgKey.value.trim(), name: cfgName.value.trim() }; store.set('ha.remote', remote.cfg);
+        await initRemote(); toast(remote.ok ? 'เชื่อมต่อทีมแล้ว' : 'ยังเชื่อมต่อไม่ได้ ตรวจลิงก์และรหัสผ่าน');
+      } } }, 'บันทึกและเชื่อมต่อ'),
+      remote.cfg ? h('button', { class: 'btn ghost', on: { click: async () => { await refreshRemote(); toast(remote.ok ? 'เชื่อมต่อได้แล้ว' : (ERR_TXT[remote.err] || 'ยังเชื่อมต่อไม่ได้')); } } }, 'ทดสอบการเชื่อมต่อ') : null,
+      remote.cfg ? h('button', { class: 'btn ghost', on: { click: () => { disconnectRemote(); toast('ตัดการเชื่อมต่อแล้ว'); } } }, 'ตัดการเชื่อมต่อ') : null,
+      remote.cfg ? h('button', { class: 'btn ghost', on: { click: () => { linkOut.value = cfgLink(); if (linkOut.select) linkOut.select(); } } }, 'สร้างลิงก์ตั้งค่าสำหรับทีม') : null),
+    remote.cfg && !remote.ok && window.claude && window.claude.use ? h('div', { class: 'warnbox' }, 'หน้านี้เปิดใน claude.ai ซึ่งไม่อนุญาตให้เชื่อมต่อ Google ให้เปิดไฟล์ index.html ที่โฮสต์เอง (เช่น GitHub Pages) แทน') : null,
+    remote.cfg ? h('div', { style: 'margin-top:8px' }, linkOut) : null,
+    remote.cfg ? h('div', { class: 'small muted', style: 'margin-top:6px' }, 'ลิงก์ตั้งค่ามีรหัสผ่านทีมอยู่ด้วย ส่งให้เฉพาะคนในทีม ผู้เปิดลิงก์จะเชื่อมต่ออัตโนมัติ ใช้ได้เมื่อเปิดจากหน้าเว็บที่โฮสต์ (ไม่ใช่ไฟล์ในเครื่อง)') : null));
+  const note = shared.provider === 'sheet' ? 'โหมดทีม (Google Sheets): ประเด็น วันที่ และสถานะ HAIT เก็บที่ส่วนกลาง เห็นการเปลี่ยนแปลงของคนอื่นภายในไม่กี่วินาที' : shared.on
+    ? (shared.canWrite ? 'โหมดทีม: ประเด็น วันที่ และสถานะ HAIT ซิงก์สดกับทุกคนที่เปิดแอปนี้ในสิทธิ์ผู้แก้ไข' : 'โหมดทีม: คุณดูได้อย่างเดียว ถ้าต้องบันทึกประเด็นให้ขอสิทธิ์ผู้แก้ไขจากเจ้าของแอป')
+    : 'โหมดเครื่องนี้: ข้อมูลเก็บในเบราว์เซอร์ของเครื่องนี้เท่านั้น ไม่แชร์กับทีม สำรองข้อมูลไว้ถ้าจะย้ายเครื่อง';
+  root.append(h('div', { class: 'card' }, h('h3', null, 'ข้อมูลและการแชร์'),
+    h('p', { class: 'small muted', style: 'margin:0 0 10px' }, note),
+    h('div', { class: 'row' },
+      h('button', { class: 'btn', on: { click: () => saveFile('ประเด็น-HA-HAIT.csv', exportCSV(), 'text/csv') } }, 'ส่งออกประเด็น (CSV)'),
+      h('button', { class: 'btn ghost', on: { click: () => saveFile('สำรองข้อมูล-HA-HAIT.json', JSON.stringify({ app: 'ha-hait-round', v: 2, issues: S.issues, dates: S.dates, haitCat: S.haitCat, plus: S.plus }, null, 1), 'application/json') } }, 'สำรองข้อมูล'),
+      ro() ? null : h('button', { class: 'btn ghost', on: { click: () => fileIn.click() } }, 'นำเข้าไฟล์สำรอง'),
+      shared.on ? null : clrBtn,
+      shared.on && shared.canWrite && localN ? h('button', { class: 'btn', on: { click: async () => {
+        let n = 0; for (const it of shared.local.issues){ const rec = Object.assign({}, it, { id: newId(), no: nextNo(), by: shared.uid, createdAt: it.createdAt || nowISO() }); if (await putIssue(rec)) n++; }
+        if (n === shared.local.issues.length){ shared.local.issues = []; store.set('ha.issues', []); }
+        toast('นำประเด็นในเครื่องนี้ขึ้นส่วนกลาง ' + n + ' รายการ'); render();
+      } } }, 'นำประเด็นในเครื่องนี้ขึ้นส่วนกลาง (' + localN + ')') : null), fileIn));
+}
+
+/* ---------- HAIT ---------- */
+const PST = ['ยังไม่ทำ', 'กำลังทำ', 'ทำแล้ว', 'ไม่เข้าข่าย'];
+function renderHait(){
+  const root = $('#v-hait'); root.textContent = '';
+  const done = DATA.plus.filter(p => (S.plus[p.id] || 0) === 2).length, na = DATA.plus.filter(p => (S.plus[p.id] || 0) === 3).length;
+  const total = DATA.plus.length - na;
+  root.append(h('div', { class: 'card' }, h('h3', null, 'HAIT Plus ' + done + ' จาก ' + total + ' ข้อ'), h('div', { class: 'bar' }, h('i', { style: 'width:' + (total ? Math.round(done * 100 / total) : 0) + '%' })),
+    h('div', { class: 'small muted' }, 'ขั้นกลางและขั้นสูงทำตามระดับของโรงพยาบาล เลือก "ไม่เข้าข่าย" ได้')));
+  root.append(h('h3', { style: 'margin:16px 2px 8px' }, 'HAIT 7 หมวด ต้องเสร็จก่อนประเมิน มิ.ย. 2570'));
+  DATA.lead.forEach((c, idx) => {
+    const sv = S.haitCat[idx] || 0; const names = ['ยังไม่เริ่ม', 'กำลังทำ', 'เสร็จ'];
+    root.append(h('div', { class: 'card' }, h('div', { class: 'row', style: 'justify-content:space-between' }, h('b', null, c.cat),
+      h('button', { class: 'st', 'data-s': String(sv), disabled: ro(), on: { click: () => setHait('cat', String(idx), (sv + 1) % 3) } }, names[sv])),
+      h('div', { class: 'small', style: 'margin-top:6px' }, c.work),
+      h('div', { class: 'small muted', style: 'margin-top:6px' }, 'เงื่อนไขเวลา: ' + c.rule),
+      h('div', { class: 'small', style: 'margin-top:4px' }, 'เริ่มภายใน ' + c.start + '  |  เสร็จ ' + c.finish),
+      h('div', { class: 'small muted' }, 'ตรวจ: ' + c.verify),
+      h('div', { class: 'small', style: 'margin-top:4px;color:var(--hait)' }, 'ความเสี่ยงเรื่องเวลา: ' + c.risk)));
+  });
+  root.append(h('h3', { style: 'margin:16px 2px 8px' }, 'HAIT Plus 39 ข้อ'));
+  ['พื้นฐาน', 'ขั้นกลาง', 'ขั้นสูง'].forEach(lv => {
+    const card = h('div', { class: 'card' }, h('h3', null, lv));
+    DATA.plus.filter(p => p.lv === lv).forEach(p => {
+      const sv = S.plus[p.id] || 0;
+      card.append(h('div', { class: 'itm' }, h('div', { class: 'id' }, p.id), h('div', null, h('div', null, p.t), h('div', { class: 'small muted' }, p.when)),
+        h('button', { class: 'st', 'data-s': String(sv), disabled: ro(), 'aria-label': 'ข้อ ' + p.id + ' สถานะ ' + PST[sv] + ' กดเพื่อเปลี่ยน', on: { click: () => setHait('plus', p.id, (sv + 1) % 4) } }, PST[sv])));
+    });
+    root.append(card);
+  });
+}
+
+/* ---------- shell ---------- */
+function renderTabs(){
+  const box = $('#tabs'); box.textContent = '';
+  const openN = S.issues.filter(isOpen).length;
+  [['cal', 'ปฏิทิน'], ['iss', 'ประเด็น'], ['over', 'ภาพรวม'], ['hait', 'HAIT']].forEach(([k, lb]) => {
+    box.append(h('button', { class: 'tab', role: 'tab', 'aria-selected': String(ui.tab === k), on: { click: () => { ui.tab = k; render(); window.scrollTo(0, 0); } } }, lb, k === 'iss' && openN ? h('span', { class: 'n' }, openN) : null));
+  });
+}
+function render(){
+  renderNext(); renderRibbon(); renderTabs();
+  ['cal', 'iss', 'over', 'hait'].forEach(k => { $('#v-' + k).hidden = ui.tab !== k; });
+  $('#ribbon').hidden = ui.tab !== 'cal'; $('#next').hidden = ui.tab !== 'cal';
+  $('#fab').hidden = !(ui.tab === 'iss' || ui.tab === 'cal') || ro();
+  const md = $('#mode'); md.textContent = ''; md.className = 'mode' + (ro() || (shared.provider === 'sheet' && !remote.ok) ? ' ro' : '');
+  md.append(h('b', null, shared.provider === 'sheet' ? (remote.ok ? 'โหมดทีม (Google Sheets) ซิงก์แล้ว' : (remote.err === 'unauthorized' ? 'รหัสผ่านทีมไม่ถูกต้อง' : 'โหมดทีม เชื่อมต่อไม่ได้ ใช้ข้อมูลล่าสุด')) : shared.on ? (shared.canWrite ? 'โหมดทีม ซิงก์สด' : 'โหมดทีม ดูได้อย่างเดียว') : (shared.connecting ? 'กำลังเชื่อมต่อส่วนกลาง' : 'โหมดเครื่องนี้ ไม่แชร์กับทีม')));
+  if (ui.tab === 'cal') renderCal();
+  if (ui.tab === 'iss') renderIssues();
+  if (ui.tab === 'over') renderOver();
+  if (ui.tab === 'hait') renderHait();
+  $('#foot').textContent = shared.on ? 'ตารางนี้เป็นข้อเสนอ ปรับวันได้เอง การเปลี่ยนแปลงทุกคนเห็นพร้อมกัน' : storageOK ? 'ข้อมูลเก็บในเบราว์เซอร์เครื่องนี้ สำรองข้อมูลได้ในหน้าภาพรวม ตารางนี้เป็นข้อเสนอ ปรับวันได้เอง' : 'เครื่องนี้บันทึกอัตโนมัติไม่ได้ กด "สำรองข้อมูล" ในหน้าภาพรวมก่อนปิดหน้านี้';
+}
+$('#fab').addEventListener('click', () => openIssue({}));
+render();
+async function initShared(){
+  if (!(window.claude && window.claude.use)) return;
+  try {
+    const db = await window.claude.use('db');
+    if (remote.cfg && remote.cfg.url) return;
+    if (!db){ shared.connecting = false; render(); return; }
+    let user = null; try { user = await window.claude.use('user'); } catch (e) {}
+    shared.local = { issues: S.issues.slice() };
+    shared.db = db; shared.user = user;
+    if (user){
+      try { shared.uid = (await user.id()) || ''; } catch (e) {}
+      try { const c = await user.can('data.write'); shared.canWrite = c !== false; } catch (e) {}
+    }
+    shared.on = true; shared.provider = 'claude'; shared.connecting = false;
+    S.issues = []; S.dates = DEF_DATES(); S.haitCat = {}; S.plus = {};
+    const onErr = e => { if (e && e.code === 'revoked') { shared.on = false; S.issues = shared.local.issues; render(); } };
+    db.collection('issues').onSnapshot(snap => { if (shared.provider !== 'claude') return; S.issues = snap.docs.map(d => Object.assign({ id: d.id }, d.data())); render(); }, onErr);
+    db.doc('settings/dates').onSnapshot(snap => { if (shared.provider !== 'claude') return; const d = snap.exists ? snap.data() : {}; S.dates = Object.assign(DEF_DATES(), d); S.dates.round = Object.assign({}, d.round || {}); S.dates.backup = Object.assign({}, d.backup || {}); S.dates.aft = Object.assign({}, d.aft || {}); S.dates.aftStatus = Object.assign({}, d.aftStatus || {}); render(); }, onErr);
+    db.doc('settings/hait').onSnapshot(snap => { if (shared.provider !== 'claude') return; const d = snap.exists ? snap.data() : {}; S.haitCat = Object.assign({}, d.cat || {}); S.plus = Object.assign({}, d.plus || {}); render(); }, onErr);
+    render();
+  } catch (e) { shared.connecting = false; render(); }
+}
+if (remote.cfg && remote.cfg.url) initRemote();
+else if (TEAM_DEFAULT.url) { shared.connecting = false; render(); openJoin(); }
+else initShared();
+})();
+</script>
+</body>
+</html>
